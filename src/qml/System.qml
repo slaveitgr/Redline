@@ -65,6 +65,7 @@ Item {
       }
      }
     }
+    RedlineDriverStatus {Layout.fillWidth:true}
     RedlineSettingsGroup {
      heading:"Settings & support"
      RedlineSettingRow{title:redlineAppearance.text(("Snap Settings"), redlineAppearance.revision);description:"Import or export application settings";kind:"action";actionText:"Import / Export";supported:false;reason:"Snapshot import/export is not implemented. Hardware profiles remain available in Tuning."}
@@ -211,24 +212,9 @@ Item {
     }
     Item{Layout.fillHeight:true}
    }
-   ColumnLayout {
-    visible:page.subpage==="ReLive VR";Layout.columnSpan:2;Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:settingsScroll.availableWidth-36;Layout.maximumWidth:settingsScroll.availableWidth-36;Layout.alignment:Qt.AlignLeft|Qt.AlignTop;Layout.margins:18;spacing:18
-    RowLayout {
-     Layout.fillWidth:true
-     Label{text:redlineAppearance.text(("VR Headset Devices"), redlineAppearance.revision);color:redlineAppearance.color("#ddd", redlineAppearance.revision);font.pixelSize:21;Layout.fillWidth:true}
-     RedlineButton{text:"How to Setup Your VR Headset";onClicked:page.information("ReLive VR","ReLive VR is not implemented. No streaming service has started.")}
-     RedlineButton{text:"VR Settings";enabled:false}
-    }
-    Rectangle {
-     Layout.fillWidth:true;implicitHeight:260;color:redlineAppearance.color("#17171b", redlineAppearance.revision);border.color:redlineAppearance.color("#39393f", redlineAppearance.revision)
-     ColumnLayout {
-      anchors.centerIn:parent;width:parent.width-80;spacing:18
-      Label{text:redlineAppearance.text((nativeDashboard.systemInfo.steamVrInstalled?"SteamVR detected":"SteamVR was not detected"), redlineAppearance.revision);color:redlineAppearance.color("#ddd", redlineAppearance.revision);font.pixelSize:18;Layout.alignment:Qt.AlignHCenter}
-      Label{text:redlineAppearance.text(("Installed SteamVR does not enable ReLive VR in Redline."), redlineAppearance.revision);color:redlineAppearance.color("#aaa", redlineAppearance.revision);wrapMode:Text.WordWrap;Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter}
-      Label{text:redlineAppearance.text(("VR integration is not connected in Redline."), redlineAppearance.revision);color:redlineAppearance.color("#999", redlineAppearance.revision);Layout.alignment:Qt.AlignHCenter}
-     }
-    }
-    Item{Layout.fillHeight:true}
+   RedlineVR {
+    store:page.store
+    visible:page.subpage==="ReLive VR";Layout.columnSpan:2;Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:settingsScroll.availableWidth-36;Layout.maximumWidth:settingsScroll.availableWidth-36;Layout.alignment:Qt.AlignLeft|Qt.AlignTop;Layout.margins:18
    }
   }
  }

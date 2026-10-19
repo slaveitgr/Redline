@@ -4,6 +4,7 @@
 #include "app.h"
 #include "nativedashboard.h"
 #include "localassistant.h"
+#include "systemintegration.h"
 #include "appearance.h"
 #include "gpubackend.h"
 #include "gamingtools.h"
@@ -198,6 +199,7 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                   QQmlApplicationEngine &qmlEngine)
 {
   qmlEngine.rootContext()->setContextProperty("redlineAppearance", new Appearance(&*settings_, &qmlEngine));
+  qmlEngine.rootContext()->setContextProperty("systemIntegration", new SystemIntegration(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("localAssistant", new LocalAssistant(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("gamingTools", new GamingTools(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("redlineGpu", new GpuBackend(&qmlEngine));
