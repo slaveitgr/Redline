@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "settingssnapshots.h"
+#include <QCoreApplication>
+#include <QTemporaryDir>
+#include <cstdio>
+static void check(bool ok,const char *why){if(!ok){fprintf(stderr,"FAIL: %s\n",why);std::exit(1);}}
+static void save(QString path,QJsonObject object){QFile file(path);check(file.open(QIODevice::WriteOnly),"fixture opened");file.write(QJsonDocument(object).toJson());}
+int main(int argc,char **argv){
+ QTemporaryDir temp;qputenv("XDG_CONFIG_HOME",(temp.path()+"/config").toUtf8());qputenv("XDG_DATA_HOME",(temp.path()+"/data").toUtf8());QCoreApplication app(argc,argv);app.setApplicationName("redline-snapshot-test");Settings settings("redline-snapshot-test");settings.setValue("Ui/theme","Dark");settings.setValue("UiV6/favorites",QString("[\"123\"]"));settings.setValue("hardware/privateProfile",1234);SettingsSnapshots snapshots(&settings);
+ auto path=temp.path()+"/export.json";check(snapshots.exportSnapshot(QUrl::fromLocalFile(path)),"export");QFile exported(path);check(exported.open(QIODevice::ReadOnly),"export readable");auto object=QJsonDocument::fromJson(exported.readAll()).object();auto values=object["settings"].toObject();check(values["Ui/theme"]=="Dark" && !values.contains("hardware/privateProfile"),"hardware keys excluded");
+ settings.setValue("UiV6/previousOnly",QString("true"));auto imported=object;values["UiV6/importOnly"]=QString("true");values["Ui/theme"]="Light";values["UiV6/favorites"]=QString("[\"456\"]");imported["settings"]=values;auto input=temp.path()+"/input.json";save(input,imported);check(snapshots.prepareImport(QUrl::fromLocalFile(input)),"validate import");check(settings.value("Ui/theme")=="Dark","validation makes no changes");save(input,{});check(snapshots.applyImport(),"validated content retained despite file change");check(settings.value("Ui/theme")=="Light" && settings.value("hardware/privateProfile")==1234,"replace and hardware preservation");check(!settings.contains("UiV6/previousOnly") && settings.contains("UiV6/importOnly"),"missing preferences reset");auto backup=snapshots.backupPath();check(QFile::exists(backup),"automatic backup saved");
+ auto invalid=object;invalid["settings"]=QJsonObject{{"hardware/privateProfile",999}};save(input,invalid);check(!snapshots.prepareImport(QUrl::fromLocalFile(input)) && !snapshots.applyImport(),"foreign settings rejected and pending cleared");
+ invalid["settings"]=QJsonObject{{"Ui/theme","BadTheme"}};save(input,invalid);check(!snapshots.prepareImport(QUrl::fromLocalFile(input)),"invalid theme rejected");invalid["settings"]=QJsonObject{{"UiV6/favorites","not-json"}};save(input,invalid);check(!snapshots.prepareImport(QUrl::fromLocalFile(input)),"malformed serialized setting rejected");
+ QFile blocker(temp.path()+"/blocked");check(blocker.open(QIODevice::WriteOnly),"backup failure fixture");blocker.close();qputenv("XDG_DATA_HOME",blocker.fileName().toUtf8());check(!snapshots.resetApplication() && settings.value("Ui/theme")=="Light","backup failure prevents reset");qputenv("XDG_DATA_HOME",(temp.path()+"/data").toUtf8());
+ check(snapshots.resetApplication(),"scoped reset");check(settings.value("Ui/theme")=="Dark" && !settings.contains("UiV6/favorites") && settings.value("hardware/privateProfile")==1234,"reset preserves hardware profiles");check(snapshots.prepareImport(QUrl::fromLocalFile(backup)) && snapshots.applyImport(),"backup is importable");
+ check(settings.contains("UiV6/previousOnly") && !settings.contains("UiV6/importOnly"),"backup restores the exact scoped key set");
+ puts("Settings snapshots: PASS (round trip, validation, staged import, backup, scoped reset, hardware preservation, backup-failure protection)");
+}

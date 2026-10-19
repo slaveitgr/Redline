@@ -24,12 +24,14 @@ Item {
  signal showAbout()
  signal information(string title,string message)
  signal preferenceSaved(string message)
+ function showSnapshots(){snapshotDialog.showSnapshots()}
  function preference(key,fallback) {var rev=preferencesRevision;return settings.getValue(key,fallback)}
  function updatePreference(key,value) {settings.setValue(key,value);page.preferenceSaved("Preference saved")}
  function infoGroup(type) {for(var i=0;i<groups.length;i++)if(groups[i].name.toLowerCase().indexOf(type)>=0)return groups[i];return {name:"",rows:[]}}
  function infoValue(type,words,fallback) {var rows=infoGroup(type).rows;for(var i=0;i<rows.length;i++)for(var j=0;j<words.length;j++)if((rows[i].title.toLowerCase()===words[j] || rows[i].title.toLowerCase()===redlineAppearance.text(words[j].charAt(0).toUpperCase()+words[j].slice(1),redlineAppearance.revision).toLowerCase()))return rows[i].value;return fallback}
  function addInfo(name,values) {var rows=[];for(var i=0;i<values.length;i+=2)rows.push({title:String(values[i]),value:String(values[i+1])});groups=groups.concat([{name:String(name).replace(/\n/g," "),rows:rows}])}
  Connections {target:settings;function onSettingChanged(key,value){page.preferencesRevision++}}
+ RedlineSnapshotDialog {id:snapshotDialog}
  SYSTEM_INFO {id:systemInfo;objectName:"SYSTEM_INFO";onAddSystemInfo:(componentName,info)=>page.addInfo(componentName,info)}
  ScrollView {
   id:settingsScroll
@@ -68,8 +70,8 @@ Item {
     RedlineDriverStatus {Layout.fillWidth:true}
     RedlineSettingsGroup {
      heading:"Settings & support"
-     RedlineSettingRow{title:redlineAppearance.text(("Snap Settings"), redlineAppearance.revision);description:"Import or export application settings";kind:"action";actionText:"Import / Export";supported:false;reason:"Snapshot import/export is not implemented. Hardware profiles remain available in Tuning."}
-     RedlineSettingRow{title:redlineAppearance.text(("Factory Reset"), redlineAppearance.revision);description:"Restore application settings and profiles";kind:"action";actionText:"Perform Reset";supported:false;reason:"A reset workflow with backup and confirmation is not implemented."}
+     RedlineSettingRow{title:redlineAppearance.text(("Snap Settings"), redlineAppearance.revision);description:"Import or export application settings";kind:"action";actionText:"Import / Export";onRequested:snapshotDialog.showSnapshots()}
+     RedlineSettingRow{title:redlineAppearance.text(("Factory Reset"), redlineAppearance.revision);description:"Reset application preferences with backup. Hardware profiles are preserved.";kind:"action";actionText:"Reset UI settings";onRequested:snapshotDialog.showReset()}
      RedlineSettingRow{title:redlineAppearance.text(("Reset Game Stats"), redlineAppearance.revision);description:"Usage statistics are not tracked yet";kind:"action";actionText:"Perform Reset";supported:false;reason:"No game statistics database is connected."}
      RedlineSettingRow{title:redlineAppearance.text(("Issue Reporting"), redlineAppearance.revision);description:"Copy diagnostic system information for a report";kind:"action";actionText:"Copy diagnostics";onRequested:{systemInfo.copyToClipboard();page.preferenceSaved("Diagnostics copied")}}
      RedlineSettingRow{title:redlineAppearance.text(("Issue Detection"), redlineAppearance.revision);description:"Automatic problem detection";kind:"switch";supported:false;reason:"Automatic issue detection is not connected."}

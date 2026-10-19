@@ -20,7 +20,7 @@ The target is a complete Adrenalin-style Linux application, including navigation
 | Performance / Tuning | Integrated LACT-derived GPU engine, CoreCtrl CPU controls, supported controls and confirmation/revert flow | Rebuild remaining inherited forms to match the target layout; per-device/per-game state, preset import/export and supported advanced fan/clock controls |
 | Performance / Settings | Graph duration connected to time-based history | Validated custom log directory and hide-overlay-during-logging behavior |
 | Smart Technology | Availability states | Linux equivalents where possible; capability detection rather than enabled-looking placeholders |
-| Settings / System | Actual system/device details, About and upstream credits | Settings snapshot import/export, scoped reset, issue-report export; offline AMD compatibility catalog and installed package detection now implemented |
+| Settings / System | Actual system/device details, About and upstream credits | Scoped snapshot import/export and reset with validation/backup implemented; issue-report file export and live update checking remain |
 | Settings / Display | Connected-display discovery and desktop settings integration | Compositor-aware color, scaling, VRR and supported per-display settings |
 | Settings / Audio & Video | Page structure | Linux audio processing and video profiles |
 | Settings / Hotkeys | Availability states | Bindings tied to implemented actions, conflict handling and Wayland support |

@@ -40,6 +40,7 @@ ApplicationWindow {
   function isFavorite(id) {return read("favorites",[]).indexOf(id)>=0}
   function toggleFavorite(id) {var list=read("favorites",[]);var index=list.indexOf(id);if(index>=0)list.splice(index,1);else list.push(id);write("favorites",list)}
  }
+ Connections {target:settingsSnapshots;function onApplied(){uiStore.revision++}}
  function syncOverlayPrefs(){nativeDashboard.configureSampling(Number(uiStore.read("perf.interval",1))*1000,Number(uiStore.read("perf.duration",60)));gamingTools.writeOverlay({enabled:uiStore.read("perf.overlay",true),position:uiStore.read("perf.overlay.position","top-right"),fontSize:uiStore.read("perf.overlay.font",20),opacity:uiStore.read("perf.overlay.opacity",50),metrics:performancePage.overlayMetrics(),fpsLimit:uiStore.read("perf.overlay.fpsLimit",0),horizontal:uiStore.read("perf.overlay.horizontal",false),hotkey:uiStore.read("perf.overlay.hotkey","Shift_R+F12")})}
  Timer {interval:100;running:true;repeat:false;onTriggered:appWindow.syncOverlayPrefs()}
  function applyRoute(route) {section=route.section;subSection=route.sub;selectedGame=route.game;uiStore.revision++;if(section===4 && subSection==="Tuning")Qt.callLater(function(){profileUi.openGlobalProfile()})}
@@ -265,11 +266,12 @@ ApplicationWindow {
   aiPage.draft("");applyRoute(saved)
   console.log("Redline AI and Home navigation smoke: "+(passed?"PASS":"FAIL"));return passed
  }
+ function previewSnapshots(){navigateTo(6,"System","");settingsPage.showSnapshots()}
  function previewNotifications(){navigate(7)}
  function previewSidebar(){navigationDrawer.open()}
  function showDetails(title, message) { detailDialog.title = title; detailText.text = message; detailDialog.open() }
  Dialog {
-  id: aboutDialog; objectName: "REDLINE_ABOUT"; title: redlineAppearance.text(("About"), redlineAppearance.revision); anchors.centerIn: parent; modal: true; width: 520; height: 490; padding: 0
+  id: aboutDialog; objectName: "REDLINE_ABOUT"; title: redlineAppearance.text(("About"), redlineAppearance.revision); anchors.centerIn: parent; modal: true; width: 560; height: 560; padding: 0
   background: Rectangle { color: redlineAppearance.color("#25252b", redlineAppearance.revision); border.color: redlineAppearance.color("#55555c", redlineAppearance.revision) }
   contentItem: About {}
   Overlay.modal: Rectangle { color: redlineAppearance.color("#aa000000", redlineAppearance.revision) }

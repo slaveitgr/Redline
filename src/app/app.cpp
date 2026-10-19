@@ -5,6 +5,7 @@
 #include "nativedashboard.h"
 #include "localassistant.h"
 #include "systemintegration.h"
+#include "settingssnapshots.h"
 #include "appearance.h"
 #include "gpubackend.h"
 #include "gamingtools.h"
@@ -199,6 +200,7 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                   QQmlApplicationEngine &qmlEngine)
 {
   qmlEngine.rootContext()->setContextProperty("redlineAppearance", new Appearance(&*settings_, &qmlEngine));
+  qmlEngine.rootContext()->setContextProperty("settingsSnapshots", new SettingsSnapshots(&*settings_, &qmlEngine));
   qmlEngine.rootContext()->setContextProperty("systemIntegration", new SystemIntegration(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("localAssistant", new LocalAssistant(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("gamingTools", new GamingTools(&qmlEngine));
@@ -327,7 +329,11 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                                                   QMetaObject::invokeMethod(mainWindow_, "previewAIApps");
                                                   QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk, aiResult]() {
                                                     mainWindow_->grabWindow().save(previewDir + "/redline-ai-apps.png");
-                                                    QApplication::exit(allOk && aiResult.toBool() ? 0 : 2);
+                                                    QMetaObject::invokeMethod(mainWindow_, "previewSnapshots");
+                                                    QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk, aiResult]() {
+                                                      mainWindow_->grabWindow().save(previewDir + "/redline-settings-snapshots.png");
+                                                      QApplication::exit(allOk && aiResult.toBool() ? 0 : 2);
+                                                    });
                                                   });
                                                 });
                                               });
