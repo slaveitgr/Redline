@@ -13,6 +13,16 @@ Built and maintained in Greece by **Slave IT Solutions**, Redline combines a Cor
 
 > **Development preview:** active implementation is underway. Available controls depend on the GPU, Linux driver, desktop session and installed tools. A visible page does not imply that every Windows feature has a working Linux equivalent.
 
+### Screenshots
+
+Actual Redline interface from the development build.
+
+![Performance metrics](docs/screenshots/performance.png)
+
+![Display controls](docs/screenshots/display.png)
+
+![Greek interface and light appearance](docs/screenshots/vr-greek.png)
+
 ### Inside Redline
 
 | Area | Current implementation |
