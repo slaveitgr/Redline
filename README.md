@@ -1,51 +1,105 @@
-# Redline — Linux Graphics Edition
+<p align="center"><img src="resources/icon/app_128.svg" width="96" alt="Redline"></p>
+<h1 align="center">REDLINE · Linux Graphics Edition</h1>
+<p align="center"><strong>Your hardware. Your games. One familiar control center.</strong><br>Developed by <a href="https://slave.gr">Slave IT Solutions — Greece</a></p>
+<p align="center"><a href="#english">English</a> · <a href="#ελληνικά">Ελληνικά</a> · <a href="docs/PARITY-ROADMAP.md">Feature roadmap</a> · <a href="https://github.com/slaveitgr/Redline/issues">Report an issue</a></p>
 
-An open-source Linux GPU control and gaming dashboard maintained by **Slave IT Solutions** — [info@slave.gr](mailto:info@slave.gr).
+---
 
-Redline is a native Qt 6/QML source fork of [CoreCtrl](https://gitlab.com/corectrl/corectrl), with an integrated GPU engine derived from [LACT](https://github.com/ilya-zlobintsev/LACT). The interface targets the layout and interaction style of AMD Software: Adrenalin Edition, with Redline branding.
+## English
 
-**Development version.** Full interface and functionality parity is not complete. There is no stable `.deb` release yet. AMD Windows binaries, recovered proprietary code and extracted assets are not distributed here. Redline is an independent project and is not an official AMD product.
+**Redline is an open-source, native Linux graphics and gaming control center with an Adrenalin-inspired interface.** It brings hardware monitoring, supported GPU tuning, game profiles and Linux gaming tools into a single Qt 6 application. Its goal is to make the move from Windows to Linux easier, especially for users who want clear controls instead of a collection of terminal commands.
 
-## What currently works
+Built and maintained in Greece by **Slave IT Solutions**, Redline combines a CoreCtrl-derived application foundation with an integrated LACT-derived GPU engine and a growing Redline interface.
 
-- Native dashboard, responsive shared navigation, history, search, session notifications and feedback; Steam library discovery and favorites.
-- Live CPU/GPU/RAM monitoring, time-based charts and CSV logging. Hardware sampling is adjustable from 0.25 to 5 seconds; graph history covers 10–120 seconds.
-- Integrated GPU control for capabilities exposed by the Linux driver, with confirmation/revert handling, plus retained CoreCtrl CPU controls.
-- GameMode, Gamescope and MangoHud detection and per-game Steam launch integration. Availability accounts for sandboxed Steam installations.
-- Dark/light appearance, Greek/English core UI and a Redline tray icon.
+> **Development preview:** active implementation is underway. Available controls depend on the GPU, Linux driver, desktop session and installed tools. A visible page does not imply that every Windows feature has a working Linux equivalent.
 
-Some pages and settings are still availability views or saved UI state. Capture/streaming, AI, VR streaming, automatic driver updates and proprietary Windows-only driver features are not implemented. FPS in the dashboard remains unavailable until a game telemetry provider is connected. Hardware support varies; unsupported controls are not unlocked by changing drivers or boot parameters.
+### Inside Redline
 
-See the [full coverage matrix and roadmap](docs/PARITY-ROADMAP.md) and [shared-shell implementation notes](docs/INTERFACE-IMPLEMENTATION.md).
+| Area | Current implementation |
+| --- | --- |
+| **Home & navigation** | Dashboard, Steam library discovery, favorites, navigation history, search and session notifications. |
+| **Performance metrics** | Live CPU/GPU/RAM monitoring, time-based charts, adjustable sampling and CSV logging. Unmeasured FPS stays unavailable. |
+| **Hardware tuning** | Integrated GPU controls for capabilities exposed by the driver, confirmation/revert handling and CoreCtrl-derived CPU controls. |
+| **Gaming tools** | GameMode, Gamescope and MangoHud detection, plus per-game Steam launch integration and overlay configuration. |
+| **Local AI** | Ollama model discovery and session chat, with an optional hardware snapshot attached by the user. Requires a running local Ollama service and model. |
+| **VR setup** | ALVR launcher installation and launch; WiVRn installation through an existing Flathub setup. Headset pairing and streaming are handled by the selected backend. |
+| **System** | Hardware and driver information, driver compatibility catalog, settings export/import and scoped reset. |
+| **Appearance** | Dark/light appearance, Greek/English core interface and Redline tray branding. |
 
-## Build
+Recording and streaming, advanced display controls and additional feature parity are under development. See the [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
 
-The current development target is Ubuntu 26.10 amd64, Qt 6.11.2. Other distributions and older Ubuntu releases have not been validated.
+### Build and try
 
-The C++ build requires CMake, a C++20 compiler, Qt >= 6.8 (Core, DBus, Quick, Charts, Widgets, Network, Svg and Linguist tools), QuaZip for Qt 6, spdlog, pugixml, Botan, and GLib/Polkit development libraries. Required QML modules include QtQuick, Controls, Layouts, Templates, Window, QtQml, Models, WorkerScript, Qt Charts and Qt Labs Platform.
+The current development target is **Ubuntu 26.10 amd64 with Qt 6.11.2**. Other distributions and older releases need separate validation.
+
+The native application requires CMake, a C++20 compiler, Qt ≥ 6.8 (Core, DBus, Quick, Charts, Widgets, Network, Svg and Linguist tools), QuaZip for Qt 6, spdlog, pugixml, Botan and GLib/Polkit development libraries. Required QML modules include QtQuick, Controls, Layouts, Templates, Window, QtQml, Models, WorkerScript, Qt Charts and Qt Labs Platform.
 
 ```sh
+git clone https://github.com/slaveitgr/Redline.git
+cd Redline
 ./build-redline.sh
 ./build-gpu-engine.sh
 ./run-preview.sh
 ```
 
-The GPU engine build uses the pinned Rust toolchain declared in the vendored source and requires its native development dependencies. See [GPU engine notes](3rdparty/redline-gpu/README-REDLINE.md). `run-preview.sh` is an explicit hardware read-only development mode. `run-native.sh` uses authorized hardware control and requires the separate development helper installation. Do not run the GUI as root.
+`run-preview.sh` lets you review the interface without applying hardware changes. The GPU engine uses the pinned Rust toolchain and native dependencies described in [its build notes](3rdparty/redline-gpu/README-REDLINE.md). Hardware control through `run-native.sh` requires the development helper setup. Run the graphical application as your regular user.
 
-The files in `packaging/` are under development. The intended installed architecture uses narrowly scoped hardware services and a dedicated authorization group; its installation, upgrade and no-repeated-password behavior must still be validated before a binary release. Normal operating-system authorization for installing/updating software remains applicable.
+Debian packaging is being validated for the development target. Release artifacts and installation instructions will be announced here when ready; source availability should not be mistaken for a stable binary release.
 
-## Tests
+### Designed for real Linux systems
 
-Steam launch-option editing tests:
+Redline checks what the system actually exposes. Supported hardware controls use the integrated Linux backends; game overlays and launch options use the relevant gaming tools. Driver compatibility information is advisory, and Redline does not install a different graphics driver automatically.
 
-```sh
-python3 -m unittest discover -s tests -p 'test_redline_steam_options.py'
-```
+Settings snapshots cover application preferences. They are not a backup of the operating system, GPU firmware or externally managed game files. See [snapshot scope and recovery](docs/SETTINGS-SNAPSHOTS.md).
 
-`tests/test_metrics_sampling.cpp` exercises the real Qt timer, sampling bounds, monotonic graph-window retention and CSV cadence without changing hardware settings. Build it with the dashboard header's generated Qt moc source and Qt6Core/Qt6Gui; run with the offscreen Qt platform.
+### Help shape the project
 
-## Licensing and attribution
+[Open an issue](https://github.com/slaveitgr/Redline/issues) with your GPU, distribution, kernel, desktop session, Redline version and steps to reproduce the problem. Screenshots and relevant logs help; remove private information before posting. Reports from different AMD GPUs and desktop environments are especially useful.
 
-Redline and its CoreCtrl-derived code are GPL-3.0-or-later; see [COPYING](COPYING), [LICENSE](LICENSE) and the preserved source notices. Vendored LACT-derived code carries its upstream MIT license and component-specific notices, which remain in `3rdparty/redline-gpu/`. Preserve all included third-party licenses when redistributing.
+Contributions to Linux backend support, accessibility, translations, interface consistency, packaging and testing are welcome. Keep capability checks and error messages accurate, and preserve upstream notices.
 
-CoreCtrl was imported as a source snapshot, not its complete upstream Git history. The original upstream README is retained in [docs/UPSTREAM-README.md](docs/UPSTREAM-README.md). Public publication uses a fresh source snapshot; local development history and private research artifacts are excluded.
+### Credits & licensing
+
+- **Slave IT Solutions — Greece:** Redline development, product direction, interface and integration. [slave.gr](https://slave.gr) · [info@slave.gr](mailto:info@slave.gr).
+- **CoreCtrl contributors:** application foundation, CPU controls and hardware-management infrastructure. [Upstream project](https://gitlab.com/corectrl/corectrl) · [retained upstream README](docs/UPSTREAM-README.md).
+- **LACT contributors:** the foundation of the integrated GPU engine. [Upstream project](https://github.com/ilya-zlobintsev/LACT) · [integration notes](3rdparty/redline-gpu/README-REDLINE.md).
+- **Qt, MangoHud, GameMode, Gamescope, ALVR, WiVRn and Ollama contributors:** the libraries and optional tools behind the wider Linux experience. These projects are maintained independently.
+
+Redline and CoreCtrl-derived code are **GPL-3.0-or-later**; see [COPYING](COPYING) and [LICENSE](LICENSE). LACT-derived components retain their MIT license and component-specific notices. Included third-party licenses remain applicable when redistributing.
+
+AMD Software: Adrenalin Edition is the interface reference. Redline is an independent community project; AMD and Radeon trademarks belong to their respective owners.
+
+---
+
+## Ελληνικά
+
+**Το Redline είναι ένα ανοικτού κώδικα κέντρο ελέγχου γραφικών και gaming για Linux, με περιβάλλον εμπνευσμένο από το Adrenalin.** Συγκεντρώνει παρακολούθηση υλικού, υποστηριζόμενες ρυθμίσεις GPU, προφίλ παιχνιδιών και εργαλεία Linux gaming σε μία εφαρμογή Qt 6.
+
+Αναπτύσσεται από τη **Slave IT Solutions στην Ελλάδα**, με στόχο η μετάβαση από τα Windows στο Linux να γίνει πιο εύκολη: οικείο περιβάλλον, κατανοητές επιλογές και λιγότερη ανάγκη για εντολές στο τερματικό.
+
+### Τι προσφέρει σήμερα
+
+- **Κεντρική σελίδα και βιβλιοθήκη Steam:** εντοπισμός εγκατεστημένων παιχνιδιών, αγαπημένα, αναζήτηση και ενιαία πλοήγηση.
+- **Μετρήσεις απόδοσης:** ζωντανές ενδείξεις CPU/GPU/RAM, γραφήματα, επιλογή διαστήματος δειγματοληψίας και καταγραφή CSV.
+- **Ρυθμίσεις υλικού:** ενσωματωμένος μηχανισμός GPU βασισμένος στο LACT και λειτουργίες CPU από το CoreCtrl, ανάλογα με την υποστήριξη του συστήματος.
+- **Εργαλεία gaming:** έλεγχος διαθεσιμότητας GameMode, Gamescope και MangoHud, επιλογές εκκίνησης ανά παιχνίδι και ρυθμίσεις overlay.
+- **Τοπικό AI:** σύνδεση με το Ollama για επιλογή μοντέλου και συνομιλία. Προαιρετική προσθήκη μετρήσεων υλικού στο μήνυμα.
+- **Προετοιμασία VR:** εγκατάσταση και άνοιγμα του ALVR launcher, καθώς και εγκατάσταση WiVRn μέσω υπάρχοντος Flathub. Ο χρήστης επιλέγει το backend που ταιριάζει στο headset του.
+- **Εξατομίκευση:** σκοτεινή/φωτεινή εμφάνιση, ελληνικά/αγγλικά στον βασικό κορμό του περιβάλλοντος και εικονίδιο Redline στο tray.
+- **Ρυθμίσεις και πληροφορίες:** στοιχεία συστήματος, πληροφορίες συμβατότητας οδηγών και εξαγωγή/εισαγωγή προτιμήσεων.
+
+### Κατάσταση ανάπτυξης
+
+Το Redline βρίσκεται σε **έκδοση ανάπτυξης**. Οι λειτουργίες recording/streaming, οι προηγμένες ρυθμίσεις οθόνης και η περαιτέρω αντιστοίχιση λειτουργιών εξελίσσονται. Η διαθεσιμότητα εξαρτάται από την κάρτα γραφικών, τον οδηγό, το γραφικό περιβάλλον και τα εγκατεστημένα εργαλεία. Δεν έχει ακόμη ολοκληρωθεί δοκιμή VR με πραγματικό headset.
+
+Ο τρέχων στόχος ανάπτυξης είναι **Ubuntu 26.10 amd64 / Qt 6.11.2**. Για δοκιμή από τον πηγαίο κώδικα, ακολούθησε τις παραπάνω οδηγίες και ξεκίνησε με το `run-preview.sh`, το οποίο δεν εφαρμόζει αλλαγές στο υλικό. Τα πακέτα Debian βρίσκονται σε διαδικασία ελέγχου.
+
+Δες τον [αναλυτικό χάρτη λειτουργιών](docs/PARITY-ROADMAP.md). Για προβλήματα ή προτάσεις, χρησιμοποίησε τα [GitHub Issues](https://github.com/slaveitgr/Redline/issues), αναφέροντας διανομή, GPU, kernel και βήματα αναπαραγωγής.
+
+### Δημιουργία & συντελεστές
+
+**Slave IT Solutions — Greece** · [slave.gr](https://slave.gr) · [info@slave.gr](mailto:info@slave.gr)
+
+Ευχαριστούμε τους συντελεστές των **CoreCtrl** και **LACT**, πάνω στη δουλειά των οποίων βασίζονται σημαντικά τμήματα του Redline, καθώς και τις κοινότητες **Qt, MangoHud, GameMode, Gamescope, ALVR, WiVRn και Ollama**. Οι άδειες και οι αναφορές των επιμέρους έργων διατηρούνται στον πηγαίο κώδικα.
+
+Το Redline διατίθεται με **GPL-3.0-or-later**, με τις επιμέρους άδειες των ενσωματωμένων βιβλιοθηκών. Είναι ανεξάρτητο κοινοτικό έργο.
