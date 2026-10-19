@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1088" height="436" viewBox="0 0 1088 436">
+<defs><linearGradient id="bg"><stop stop-color="#09090d"/><stop offset="1" stop-color="#18121b"/></linearGradient><linearGradient id="red"><stop stop-color="#ed003b" stop-opacity="0"/><stop offset=".6" stop-color="#ed003b"/><stop offset="1" stop-color="#ff576c"/></linearGradient></defs>
+<path fill="url(#bg)" d="M0 0h1088v436H0z"/>
+<g fill="none" stroke="url(#red)"><path stroke-width="48" opacity=".18" d="M160 476 700-64M360 476 900-64"/><path stroke-width="6" d="M0 400 620-220M350 656 1150-144"/><path stroke-width="2" opacity=".5" d="M0 360 620-260M390 656 1190-144"/></g>
+<text x="76" y="216" fill="#fff" font-family="sans-serif" font-size="84" font-weight="700" letter-spacing="9">REDLINE</text>
+<path fill="#ed003b" d="M78 244h310v5H78z"/>
+<text x="80" y="295" fill="#b6b3bd" font-family="sans-serif" font-size="22" letter-spacing="3">LINUX GRAPHICS EDITION</text>
+<text x="80" y="382" fill="#807d88" font-family="sans-serif" font-size="15">SLAVE IT SOLUTIONS</text>
+</svg>

@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=@PROJECT_ORG@.helper
+Exec=@CMAKE_INSTALL_FULL_LIBEXECDIR@/redline/redline_helper
+User=root

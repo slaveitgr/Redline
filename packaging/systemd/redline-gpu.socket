@@ -1,0 +1,12 @@
+[Unit]
+Description=Redline GPU control socket
+[Socket]
+ListenStream=/run/redline-gpu.sock
+SocketUser=root
+SocketGroup=redline-hardware
+SocketMode=0660
+Accept=yes
+MaxConnections=1
+RemoveOnStop=yes
+[Install]
+WantedBy=sockets.target

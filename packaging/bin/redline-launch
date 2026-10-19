@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+unset REDLINE_READ_ONLY REDLINE_PREVIEW_DIR REDLINE_LIVE_CAPTURE_DIR
+export REDLINE_GPU_ENGINE=1
+export LD_LIBRARY_PATH=/usr/lib/redline
+exec /usr/bin/redline-native "$@"

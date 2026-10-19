@@ -1,0 +1,10 @@
+#!/usr/bin/python3
+"""One-time administrator setup; never edits user-owned files as root."""
+import argparse, os, pwd, subprocess, sys
+p=argparse.ArgumentParser();p.add_argument('--uid',required=True,type=int);p.add_argument('--no-start',action='store_true');a=p.parse_args()
+if os.geteuid()!=0:sys.exit('Run setup through the desktop administrator authorization dialog.')
+user=pwd.getpwuid(a.uid)
+if user.pw_uid<1000 or user.pw_shell.endswith(('nologin','false')):sys.exit('Select a normal login account.')
+subprocess.run(['/usr/sbin/usermod','-a','-G','redline-hardware',user.pw_name],check=True)
+if not a.no_start:subprocess.run(['/usr/bin/systemctl','start','redline-gpu.socket'],check=True)
+print('Redline hardware access configured for '+user.pw_name+'.')

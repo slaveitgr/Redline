@@ -1,0 +1,23 @@
+[Desktop Entry]
+Name=Redline
+GenericName=Linux Graphics
+Comment=Control your computer with ease using application profiles
+Exec=redline-native
+Icon=redline
+StartupNotify=true
+StartupWMClass=io.github.redline.native.Redline
+Terminal=false
+Type=Application
+Categories=System;Settings;Utility;
+Keywords=control;system;hardware;frequency;fan;voltage;overclock;underclock;gpu;cpu;
+
+# Translations
+GenericName[bg]=Централен Контрол
+Comment[bg]=Управлявайте компютъра си с лекота, изполвайки профили за програмите ви
+
+GenericName[es_ES]=Control central
+Comment[es_ES]=Controle su computadora fácilmente usando perfiles de aplicaciones
+
+GenericName[ru]=Профильный контроль
+Comment[ru]=Удобное управление вашим компьютером через программные профили
+Keywords[ru]=управление;система;оборудование;частота;вентилятор;напряжение;разгон;понижение;гп;видеокарта;цп;процессор;

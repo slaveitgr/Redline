@@ -1,0 +1,92 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright 2021 Juan Palacios <jpalaciosdev@gmail.com>
+
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import CoreCtrl.UIComponents 1.0
+import "Style.js" as Style
+
+AMD_PM_VOLT_CURVE {
+  id: pmVoltCurve
+  objectName: "AMD_PM_VOLT_CURVE"
+
+  width: contents.width
+  height: contents.height
+
+  onModeChanged: mode => modeSw.checked = mode === "manual"
+  onPointsRangeChanged: (freqMin, freqMax, voltMin, voltMax) => {
+    voltCurve.configureAxes(qsTr("Frequency"), "MHz", freqMin, freqMax,
+                            qsTr("Voltage"), "mV", voltMin, voltMax)
+  }
+  onPointsChanged: points => {
+    voltCurve.removeCurve("volt")
+    voltCurve.addCurve("volt", redlineAppearance.color(Style.Theme.accent, redlineAppearance.revision), points)
+  }
+
+  CPane {
+    id: contents
+    padding: 0
+    anchors.fill: parent
+
+    RowLayout {
+      anchors.fill: parent
+
+      Pane {
+        Layout.fillHeight: true
+
+        padding: Style.g_padding
+        background: Rectangle {
+          border.color: redlineAppearance.color(Style.FVControl.border_color, redlineAppearance.revision)
+          border.width: 2
+          color: redlineAppearance.color("#00000000", redlineAppearance.revision)
+        }
+
+        ColumnLayout {
+          anchors.fill: parent
+
+          RowLayout {
+            Item {
+              implicitWidth: modeSw.width / (1 + Style.g_tweakScale)
+
+              Switch {
+                id: modeSw
+
+                scale: Style.g_tweakScale
+                anchors.centerIn: parent
+
+                onToggled: pmVoltCurve.changeMode(checked ? "manual" : "auto")
+              }
+            }
+            Label {
+              text: qsTr("Voltage")
+              font.pointSize: 11
+              font.bold: true
+            }
+
+            Item { Layout.fillWidth: true }
+          }
+
+          CurveControl {
+            id: voltCurve
+            Layout.fillHeight: true
+
+            minXDistance: 5
+
+            xTickCount: 3
+            xMinorTickCount: 1
+            yTickCount: 3
+            yMinorTickCount: 1
+
+            width: 400
+            height: 290
+
+            enabled: modeSw.checked
+
+            onCurveChanged: (name, oldPoint, newPoint) => pmVoltCurve.updatePoint(oldPoint, newPoint)
+          }
+        }
+      }
+    }
+  }
+}

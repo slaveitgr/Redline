@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+uid=$(id -u)
+[ "$uid" != 0 ] || { echo 'Launch Redline as your normal desktop user.' >&2; exit 1; }
+name=$(id -un)
+if ! getent group redline-hardware | cut -d: -f4 | tr ',' '\n' | grep -Fxq "$name"; then
+ pkexec /usr/libexec/redline/redline-setup --uid "$uid"
+fi
+# Refresh the child's supplemental groups after first setup; no logout needed.
+if ! id -Gn | tr ' ' '\n' | grep -Fxq redline-hardware; then
+ exec sg redline-hardware -c '/usr/libexec/redline/redline-launch'
+fi
+exec /usr/libexec/redline/redline-launch

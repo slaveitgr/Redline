@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright 2019 Juan Palacios <jpalaciosdev@gmail.com>
+
+#include "helpersysctl.h"
+
+#include "common/icryptolayer.h"
+#include "core/icommandqueue.h"
+#include "helperids.h"
+#include <QByteArray>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusPendingCall>
+#include <QString>
+#include <format>
+#include <stdexcept>
+#include <utility>
+
+HelperSysCtl::HelperSysCtl(std::shared_ptr<ICryptoLayer> cryptoLayer,
+                           bool logCommands) noexcept
+: cryptoLayer_(std::move(cryptoLayer))
+, logCommands_(logCommands)
+{
+}
+
+void HelperSysCtl::init()
+{
+  sysCtlInterface_ = std::make_unique<QDBusInterface>(
+      QStringLiteral(DBUS_HELPER_SERVICE),
+      QStringLiteral(DBUS_HELPER_SYSCTL_PATH),
+      QStringLiteral(DBUS_HELPER_SYSCTL_INTERFACE),
+      QDBusConnection::systemBus());
+
+  if (!sysCtlInterface_->isValid()) {
+    throw std::runtime_error(
+        std::format("Cannot connect to D-Bus interface {} (path: {})",
+                    DBUS_HELPER_SYSCTL_INTERFACE, DBUS_HELPER_SYSCTL_PATH));
+  }
+}
+
+void HelperSysCtl::apply(ICommandQueue &ctlCmds)
+{
+  if (logCommands_)
+    ctlCmds.logCommands();
+
+  auto data = ctlCmds.toRawData();
+  if (!data.isEmpty()) {
+    auto signature = cryptoLayer_->signature(data);
+    sysCtlInterface_->asyncCall(QStringLiteral("apply"), data, signature);
+  }
+}
+
+void HelperSysCtl::logCommands(bool enable)
+{
+  logCommands_ = enable;
+}

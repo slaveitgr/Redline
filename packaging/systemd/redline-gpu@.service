@@ -1,0 +1,22 @@
+[Unit]
+Description=Redline GPU control session
+[Service]
+Type=simple
+ExecStart=/usr/libexec/redline/redline-gpu-backend
+StandardInput=socket
+StandardOutput=inherit
+StandardError=journal
+StateDirectory=redline-gpu
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ReadWritePaths=/sys/devices
+TimeoutStopSec=15

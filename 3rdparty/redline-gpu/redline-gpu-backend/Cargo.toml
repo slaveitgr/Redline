@@ -1,0 +1,8 @@
+[package]
+name = "redline-gpu-backend"
+version = "0.1.0"
+edition.workspace = true
+[dependencies]
+lact-daemon = {path = "../lact-daemon", default-features = false}
+serde_json.workspace = true
+anyhow.workspace = true

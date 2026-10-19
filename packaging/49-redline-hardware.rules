@@ -1,0 +1,9 @@
+// Only the two application-specific helper actions are preauthorized.
+// Membership is granted during administrator-authorized setup.
+polkit.addRule(function(action, subject) {
+    if ((action.id === "io.github.redline.native.helper.init" ||
+         action.id === "io.github.redline.native.helperkiller.init") &&
+        subject.local && subject.active && subject.isInGroup("redline-hardware")) {
+        return polkit.Result.YES;
+    }
+});

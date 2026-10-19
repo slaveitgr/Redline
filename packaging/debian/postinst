@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+case "$1" in
+ configure)
+  getent group redline-hardware >/dev/null || addgroup --system --quiet redline-hardware
+  install -d -o root -g root -m 700 /var/lib/redline-gpu
+  if [ ! -e /var/lib/redline-gpu/config.yaml ] && [ -f /etc/redline-gpu/config.yaml ] && [ ! -L /etc/redline-gpu/config.yaml ]; then
+   if [ "$(stat -c %u /etc/redline-gpu/config.yaml)" = 0 ]; then install -o root -g root -m 600 /etc/redline-gpu/config.yaml /var/lib/redline-gpu/config.yaml; fi
+  fi
+  setup_uid=${PKEXEC_UID:-${SUDO_UID:-}}
+  case "$setup_uid" in ''|*[!0-9]*) ;; *) if [ "$setup_uid" -ge 1000 ]; then /usr/libexec/redline/redline-setup --uid "$setup_uid" --no-start; fi ;; esac
+  if [ -d /run/systemd/system ]; then systemctl daemon-reload; fi
+  deb-systemd-helper enable redline-gpu.socket >/dev/null || true
+  if [ -d /run/systemd/system ]; then deb-systemd-invoke start redline-gpu.socket; fi
+  if command -v update-desktop-database >/dev/null; then update-desktop-database -q; fi
+ ;;
+esac

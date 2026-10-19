@@ -1,0 +1,173 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright 2019 Juan Palacios <jpalaciosdev@gmail.com>
+
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import "Style.js" as Style
+
+Pane {
+  id: btn
+
+  property alias label: btnText.text
+  property string name: ""
+  property alias icon : icn.source
+  property string exe: ""
+  property bool isGlobal: false
+  property bool profileActivated: true
+  property alias toggledManual: manualSwc.checked
+
+  implicitWidth: 240
+  implicitHeight: 60
+
+  padding: 0
+
+  signal clicked()
+  signal enableProfile(bool enable)
+  signal toggleManualProfile(string name)
+  signal edit()
+  signal clone()
+  signal exportTo()
+  signal remove()
+
+  ToolTip.delay: Style.ToolTip.delay
+  ToolTip.timeout: Style.ToolTip.timeout
+  ToolTip.visible: hovered
+  ToolTip.text: label
+
+  MouseArea {
+    anchors.fill: parent
+    propagateComposedEvents: true
+    onClicked: mouse => btn.clicked()
+  }
+
+  background: Rectangle {
+    color: btn.hovered ? redlineAppearance.color(Style.RectItem.background_hover, redlineAppearance.revision)
+                       : btn.profileActivated ? redlineAppearance.color(Style.RectItem.background, redlineAppearance.revision)
+                                              : redlineAppearance.color(Style.RectItem.background_alt, redlineAppearance.revision)
+  }
+
+  RowLayout {
+    anchors.fill: parent
+    spacing: 0
+
+    Item {
+      Layout.fillHeight: true
+      Layout.alignment: Qt.AlignLeft
+      Layout.leftMargin: Style.RectItem.padding
+
+      width: icn.width
+      height: icn.height
+
+      Image {
+        id: icn
+        cache: false
+        anchors.centerIn: parent
+        fillMode: Image.PreserveAspectFit
+        width: Style.g_icon.size
+        height: Style.g_icon.size
+        sourceSize.width: Style.g_icon.source_size
+      }
+    }
+
+    Item {
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+      Layout.leftMargin: 10
+
+      Label {
+        id: btnText
+
+        width: parent.width
+        anchors.centerIn: parent
+
+        elide: Text.ElideRight
+        wrapMode: Text.WordWrap
+
+        color: btn.profileActivated ?
+                 redlineAppearance.color(Style.RectItem.text_color, redlineAppearance.revision) :
+                 redlineAppearance.color(Style.RectItem.text_color_alt, redlineAppearance.revision)
+
+        onTextChanged: {
+          if (parent.height > 0) {
+            height = parent.height
+            height = Math.min(contentHeight, height)
+          }
+        }
+
+        onContentSizeChanged: {
+          // set height dynamically, to obtain centered wrapped and unwrapped text
+          if (parent.height > 0)
+            height = Math.min(contentHeight, parent.height)
+        }
+      }
+    }
+
+    Switch {
+      id: manualSwc
+      visible: exe.length == 0
+
+      padding: 0
+      rotation: -90
+      scale: Style.g_tweakScale
+
+      Layout.fillHeight: true
+      Layout.alignment: Qt.AlignRight
+      Layout.preferredWidth: 30
+
+      onToggled: btn.toggleManualProfile(name)
+    }
+
+    ToolButton {
+      id: editBtn
+
+      text: Style.g_icon.MENU;
+      font.pointSize: Style.g_text.icon_size
+
+      Layout.fillHeight: true
+      Layout.alignment: Qt.AlignRight
+      Layout.preferredWidth: 30
+
+      onClicked: menu.open()
+
+      Menu {
+        id: menu
+        background: Rectangle {
+          implicitWidth: 200
+          implicitHeight: 40
+          color: redlineAppearance.color(Style.Menu.background, redlineAppearance.revision)
+        }
+
+        MenuItem {
+          text: btn.profileActivated ? qsTr("Disable") : qsTr("Enable")
+          enabled: !isGlobal && exe.length > 0
+          onTriggered: btn.enableProfile(!btn.profileActivated)
+        }
+
+        MenuItem {
+          text: qsTr("Edit...")
+          enabled: !isGlobal
+          onTriggered: btn.edit()
+        }
+
+        MenuItem {
+          text: qsTr("Clone...")
+          onTriggered: btn.clone()
+        }
+
+        MenuItem {
+          text: qsTr("Export to...")
+          onTriggered: btn.exportTo()
+        }
+
+        MenuSeparator {}
+
+        MenuItem {
+          text: qsTr("Remove")
+          enabled: !isGlobal
+          onTriggered: btn.remove()
+        }
+      }
+    }
+  }
+}
