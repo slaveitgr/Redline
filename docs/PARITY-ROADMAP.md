@@ -6,7 +6,7 @@ The target is a complete Adrenalin-style Linux application, including navigation
 
 | Area | Current Redline implementation | Remaining work |
 | --- | --- | --- |
-| Main shell | Horizontal navigation, back/forward history, search, Redline logo, notification panel, settings gear | Compare every interaction state, spacing, icon geometry, responsive layout and keyboard navigation against the supplied references |
+| Main shell | Shared navigation components, responsive search, vector R branding, back/forward history, session notifications with unread state, feedback and settings actions, navigation drawer | Continue page-specific visual comparisons; implement compact/in-game sidebar window mode and complete keyboard interaction coverage |
 | Home | Three-column dashboard, discovered games, hardware information | Functional recent activity and media; consistent layout at each supported window size |
 | AI / Chat / Apps | Navigation and availability states | A real Linux AI provider and application discovery; no simulated install or chat |
 | Gaming / Games | Installed Steam games, search, sort, favorites, per-game settings, launch recipes | Playtime and game telemetry; persistence and refresh on library changes |

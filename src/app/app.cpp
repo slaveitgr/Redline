@@ -40,7 +40,7 @@
 App::App() noexcept
 : QObject()
 , appInfo_(App::Name, App::VersionStr)
-, singleInstance_(App::Name)
+, singleInstance_(qEnvironmentVariableIsSet("REDLINE_READ_ONLY") ? std::string_view("RedlinePreview") : App::Name)
 {
 }
 
@@ -70,8 +70,10 @@ int App::exec(int argc, char **argv)
   bool logCommands = cmdParser_.isSet("enable-log-commands");
   bool logProfileStack = cmdParser_.isSet("enable-log-profile-stack");
   if (!buildComponents(qmlEngine, helperTimeout(defaultHelperTimeout),
-                       logCommands, logProfileStack))
+                       logCommands, logProfileStack)) {
+    exit();
     return -1;
+  }
 
   // Load and apply stored settings.
   settings_->signalSettings();
@@ -85,8 +87,8 @@ int App::exec(int argc, char **argv)
 void App::exit()
 {
   if (!noop_) {
-    sysSyncer_->stop();
-    helperControl_->stop();
+    if(sysSyncer_)sysSyncer_->stop();
+    if(helperControl_)helperControl_->stop();
 
     // Shutdown spdlog before QApplication quits to always flush the logs.
     // See: https://github.com/gabime/spdlog/issues/2502
@@ -220,6 +222,7 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
   // Preview captures exercise our own window only; no helper is started in read-only mode.
   const auto previewDir = qEnvironmentVariable("REDLINE_PREVIEW_DIR");
   if (!previewDir.isEmpty() && qEnvironmentVariableIsSet("REDLINE_READ_ONLY")) {
+    mainWindow_->resize(1460, 920);
     QTimer::singleShot(3000, mainWindow_, [this, previewDir]() {
       QDir().mkpath(previewDir);
       mainWindow_->grabWindow().save(previewDir + "/native-home.png");
@@ -303,7 +306,18 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                                           QMetaObject::invokeMethod(mainWindow_, "previewOverlay");
                                           QTimer::singleShot(500, mainWindow_, [this, previewDir, ok, aboutOk, routeOk, settingsOk, appearanceOk]() {
                                             mainWindow_->grabWindow().save(previewDir + "/redline-performance-overlay.png");
-                                            QApplication::exit(ok && aboutOk && routeOk && settingsOk && appearanceOk ? 0 : 2);
+                                            QVariant shellResult;
+                                            QMetaObject::invokeMethod(mainWindow_, "runShellSmoke", Q_RETURN_ARG(QVariant, shellResult));
+                                            const bool allOk = ok && aboutOk && routeOk && settingsOk && appearanceOk && shellResult.toBool();
+                                            QMetaObject::invokeMethod(mainWindow_, "previewNotifications");
+                                            QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk]() {
+                                              mainWindow_->grabWindow().save(previewDir + "/redline-notifications.png");
+                                              QMetaObject::invokeMethod(mainWindow_, "previewSidebar");
+                                              QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk]() {
+                                                mainWindow_->grabWindow().save(previewDir + "/redline-navigation-sidebar.png");
+                                                QApplication::exit(allOk ? 0 : 2);
+                                              });
+                                            });
                                           });
                                         });
                                       });

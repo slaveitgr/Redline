@@ -301,5 +301,17 @@
   "Background opacity": "Αδιαφάνεια φόντου",
   "Open Gaming": "Άνοιγμα παιχνιδιών",
   "GameMode status": "Κατάσταση GameMode",
-  "MangoHud overlay is available for connected game launches. Open Gaming, select a game and Apply to Steam. Restart the game after changing these settings.": "Το MangoHud διατίθεται σε συνδεδεμένα παιχνίδια. Άνοιξε τα Παιχνίδια, επίλεξε παιχνίδι και πάτησε Εφαρμογή στο Steam. Επανεκκίνησε το παιχνίδι για τις νέες ρυθμίσεις."
+  "MangoHud overlay is available for connected game launches. Open Gaming, select a game and Apply to Steam. Restart the game after changing these settings.": "Το MangoHud διατίθεται σε συνδεδεμένα παιχνίδια. Άνοιξε τα Παιχνίδια, επίλεξε παιχνίδι και πάτησε Εφαρμογή στο Steam. Επανεκκίνησε το παιχνίδι για τις νέες ρυθμίσεις.",
+  "Feedback": "Σχόλια",
+  "Navigation sidebar": "Πλαϊνή πλοήγηση",
+  "Open GitHub issues": "Άνοιγμα θεμάτων στο GitHub",
+  "Report a problem or suggest a feature for Redline.": "Ανάφερε ένα πρόβλημα ή πρότεινε μια λειτουργία για το Redline.",
+  "Mark all as read": "Σήμανση όλων ως αναγνωσμένων",
+  "Remove read notifications": "Αφαίρεση αναγνωσμένων ειδοποιήσεων",
+  "Mark as read": "Σήμανση ως αναγνωσμένη",
+  "Remove": "Αφαίρεση",
+  "No notifications.": "Δεν υπάρχουν ειδοποιήσεις.",
+  "Events from this Redline session": "Συμβάντα αυτής της συνεδρίας Redline",
+  "GPU backend": "Υπηρεσία GPU",
+  "Hardware changes are disabled in this development preview.": "Οι αλλαγές υλικού είναι απενεργοποιημένες σε αυτήν τη δοκιμαστική προεπισκόπηση."
 }

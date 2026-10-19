@@ -24,7 +24,15 @@ class GamingTools final:public QObject {
  explicit GamingTools(QObject *parent=nullptr):QObject(parent){
   connect(&timer_,&QTimer::timeout,this,[this]{status();});timer_.start(5000);status();
  }
+ ~GamingTools(){
+  timer_.stop();
+  for(auto process:findChildren<QProcess*>(QString(),Qt::FindDirectChildrenOnly)){
+   disconnect(process,nullptr,this,nullptr);
+   if(process->state()!=QProcess::NotRunning){process->terminate();if(!process->waitForFinished(1000)){process->kill();process->waitForFinished(500);}}
+  }
+ }
  QString overlayConfigPath()const{
+  if(qEnvironmentVariableIsSet("REDLINE_READ_ONLY"))return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/preview/MangoHud.conf";
   const auto snap=QDir::homePath()+"/snap/steam/common";
   return QFileInfo::exists(snap)?snap+"/redline/MangoHud.conf":QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/MangoHud.conf";
  }

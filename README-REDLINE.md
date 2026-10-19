@@ -8,7 +8,7 @@ Redline is a native Qt 6/QML source fork of [CoreCtrl](https://gitlab.com/corect
 
 ## What currently works
 
-- Native dashboard, navigation/history, Steam library discovery, search and favorites.
+- Native dashboard, responsive shared navigation, history, search, session notifications and feedback; Steam library discovery and favorites.
 - Live CPU/GPU/RAM monitoring, time-based charts and CSV logging. Hardware sampling is adjustable from 0.25 to 5 seconds; graph history covers 10–120 seconds.
 - Integrated GPU control for capabilities exposed by the Linux driver, with confirmation/revert handling, plus retained CoreCtrl CPU controls.
 - GameMode, Gamescope and MangoHud detection and per-game Steam launch integration. Availability accounts for sandboxed Steam installations.
@@ -16,7 +16,7 @@ Redline is a native Qt 6/QML source fork of [CoreCtrl](https://gitlab.com/corect
 
 Some pages and settings are still availability views or saved UI state. Capture/streaming, AI, VR streaming, automatic driver updates and proprietary Windows-only driver features are not implemented. FPS in the dashboard remains unavailable until a game telemetry provider is connected. Hardware support varies; unsupported controls are not unlocked by changing drivers or boot parameters.
 
-See the [full coverage matrix and roadmap](docs/PARITY-ROADMAP.md).
+See the [full coverage matrix and roadmap](docs/PARITY-ROADMAP.md) and [shared-shell implementation notes](docs/INTERFACE-IMPLEMENTATION.md).
 
 ## Build
 

@@ -25,3 +25,7 @@ Makefile
 /redline-overlay.conf
 
 __pycache__/
+
+# Private third-party reverse-engineering inputs and recovered resources
+/.research-private/
+/src/qml/images/feature.png

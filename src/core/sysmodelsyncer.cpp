@@ -88,8 +88,8 @@ void SysModelSyncer::init()
 void SysModelSyncer::stop()
 {
   stopSignal_.store(true, std::memory_order_relaxed);
-  updateThread_->join();
-  syncThread_->join();
+  if(updateThread_ && updateThread_->joinable())updateThread_->join();
+  if(syncThread_ && syncThread_->joinable())syncThread_->join();
 }
 
 void SysModelSyncer::apply(IProfileView &profileView)

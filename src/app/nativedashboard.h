@@ -80,6 +80,11 @@ class NativeDashboard final : public QObject {
  Q_INVOKABLE void stopLogging(){if(logging()){logFile_.close();emit loggingChanged();}}
  Q_INVOKABLE bool openLogs(){return QDesktopServices::openUrl(QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+"/logs"));}
 
+ Q_INVOKABLE bool openProjectPage(QString page){
+  const QMap<QString,QString> pages{{"issues","https://github.com/slaveitgr/Redline/issues"},{"source","https://github.com/slaveitgr/Redline"}};
+  return pages.contains(page) && QDesktopServices::openUrl(QUrl(pages.value(page)));
+ }
+
  Q_INVOKABLE bool launchGame(QString id) {
   for(const auto &v:games_)if(v.toMap()["id"].toString()==id)return QDesktopServices::openUrl(QUrl("steam://rungameid/"+id));
   return false;

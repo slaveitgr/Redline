@@ -7,19 +7,20 @@ import QtQuick.Controls.Universal
 import QtQuick.Layouts
 import "Style.js" as Style
 import "Settings.js" as Settings
+import "RedlineDesign.js" as Design
 ApplicationWindow {
  id: appWindow
- title: redlineAppearance.text(("Redline — Linux Graphics Edition"), redlineAppearance.revision)
+ title: redlineAppearance.text(redlineReadOnly?"Redline — UI Preview":"Redline — Linux Graphics Edition", redlineAppearance.revision)
  width: 1460; height: 920
  minimumWidth: 1180; minimumHeight: 700
- font.family: Style.g_text.family; font.pointSize: Style.g_text.size
+ font.family: "Sans Serif"; font.pixelSize: 14
  Universal.theme: redlineAppearance.light ? Universal.Light : Universal.Dark; Universal.accent: redlineAppearance.color("#ed003b", redlineAppearance.revision)
  Universal.foreground: redlineAppearance.color("#eeeeee", redlineAppearance.revision); Universal.background: redlineAppearance.color("#101012", redlineAppearance.revision)
  property int section: 0
  property string subSection: ""
  property string selectedGame: ""
- property var sectionTabs: [[],["Chat","Apps"],["Games","Graphics","Advisors"],["Record","Live Stream","Scene Editor","Media","Capture Settings"],["Metrics","Tuning","Metrics Settings"],["Overview"],["System","Display","Audio & Video","Hotkeys","ReLive VR","Preferences"]]
- property var sectionNames: ["Home","AI","Gaming","Record & Stream","Performance","Smart Technology","Settings"]
+ property var sectionTabs: [[],["Chat","Apps"],["Games","Graphics","Advisors"],["Record","Live Stream","Scene Editor","Media","Settings"],["Metrics","Tuning","Settings"],["Overview"],["System","Display","Audio & Video","Hotkeys","ReLive VR","Preferences"],[]]
+ property var sectionNames: ["Home","AI","Gaming","Record & Stream","Performance","Smart Technology","Settings","Notifications"]
  property var navigation: [{section:0,sub:"",game:""}]
  property int navigationIndex: 0
  onSectionChanged: subSection = sectionTabs[section][0] || ""
@@ -44,6 +45,7 @@ ApplicationWindow {
  function applyRoute(route) {section=route.section;subSection=route.sub;selectedGame=route.game;uiStore.revision++;if(section===4 && subSection==="Tuning")Qt.callLater(function(){profileUi.openGlobalProfile()})}
  function navigate(target) {navigateTo(target,sectionTabs[target][0] || "","")}
  function navigateTo(target, sub, game) {
+  if(sub==="Capture Settings" || sub==="Metrics Settings")sub="Settings"
   if(target<0 || target>=sectionTabs.length)return
   if(sectionTabs[target].length && sectionTabs[target].indexOf(sub)<0)sub=sectionTabs[target][0]
   var next={section:target,sub:sub,game:game || ""}
@@ -60,6 +62,7 @@ ApplicationWindow {
   }
   return entries
  }
+ function matchesSearch(label){var revision=redlineAppearance.revision;var query=searchField.text.trim().toLocaleLowerCase();return !query || label.toLocaleLowerCase().indexOf(query)>=0 || redlineAppearance.text(label,revision).toLocaleLowerCase().indexOf(query)>=0}
  function previewTuning() {openTuning()}
  function previewMetrics(){resetAppearance();navigateTo(4,"Metrics","");uiStore.write("perf.metrics.mode","Tracking")
   var before=uiStore.read("perf.visible.cpu",true)
@@ -70,7 +73,7 @@ ApplicationWindow {
   nativeDashboard.startLogging()
  }
  function previewOverlay(){nativeDashboard.stopLogging();uiStore.write("perf.metrics.mode","Overlay")}
- function previewFeatures() {navigateTo(3,"Capture Settings","")}
+ function previewFeatures() {navigateTo(3,"Settings","")}
  function previewLibrary() {navigateTo(2,"Games","")}
  function runNavigationSmoke() {
   var oldSection=section, oldSub=subSection, oldGame=selectedGame
@@ -85,80 +88,101 @@ ApplicationWindow {
   uiStore.write("smoke-preference",before)
   applyRoute({section:oldSection,sub:oldSub,game:oldGame});return valid
  }
- component NavIcon: Button {
-  property string glyph
-  Layout.preferredWidth: 42; Layout.fillHeight: true
-  hoverEnabled: true
-  icon.source: "icons/" + glyph + ".svg"
-  icon.width: 21; icon.height: 21
-  icon.color: enabled ? (hovered ? redlineAppearance.color("#ffffff", redlineAppearance.revision) : redlineAppearance.color("#aaaaaf", redlineAppearance.revision)) : redlineAppearance.color("#505054", redlineAppearance.revision)
-  background: Rectangle { color: parent.hovered ? redlineAppearance.color("#2c2c30", redlineAppearance.revision) : "transparent" }
-  ToolTip.visible: hovered
-  ToolTip.text: redlineAppearance.text(text, redlineAppearance.revision)
-  display: AbstractButton.IconOnly
- }
- header: ColumnLayout {
-  spacing: 0
+ RedlineNotificationsModel {id:notificationCenter}
+ property string lastGpuError:""
+ Connections {target:redlineGpu;function onChanged(){if(redlineGpu.error && redlineGpu.error!==appWindow.lastGpuError){appWindow.lastGpuError=redlineGpu.error;notificationCenter.add("gpu:"+redlineGpu.error,"GPU backend",redlineGpu.error,"error")}}}
+ Timer {interval:0;running:true;repeat:false;onTriggered:{if(redlineReadOnly)notificationCenter.add("preview","Read-only preview","Hardware changes are disabled in this development preview.","information")}}
+ Shortcut {sequence:"Alt+Left";onActivated:appWindow.travel(-1)}
+ Shortcut {sequence:"Alt+Right";onActivated:appWindow.travel(1)}
+ Shortcut {sequence:"Ctrl+F";onActivated:{if(searchField.visible){searchField.forceActiveFocus();searchField.selectAll()}else searchDialog.open()}}
+ header:ColumnLayout {
+  spacing:0
   Rectangle {
-   Layout.fillWidth: true; Layout.preferredHeight: 55; color: redlineAppearance.color("#222225", redlineAppearance.revision)
+   objectName:"REDLINE_NAVIGATION_BAR"
+   Layout.fillWidth:true;Layout.preferredHeight:Design.navigationHeight
+   color:redlineAppearance.color(Design.navigationSurface,redlineAppearance.revision)
    RowLayout {
-    anchors.fill: parent; spacing: 0
-    Rectangle { Layout.preferredWidth: 52; Layout.fillHeight: true; color: redlineAppearance.color("#e90035", redlineAppearance.revision); Label { anchors.centerIn: parent; text: redlineAppearance.text(("R"), redlineAppearance.revision); font.bold: true; font.pixelSize: 29; color: "white" } }
-    NavIcon { glyph: "back"; text: "Back"; Layout.preferredWidth: 36; enabled: navigationIndex > 0; onClicked: appWindow.travel(-1) }
-    NavIcon { glyph: "forward"; text: "Forward"; Layout.preferredWidth: 36; enabled: navigationIndex < navigation.length - 1; onClicked: appWindow.travel(1) }
-    Repeater {
-     model: ["Home", "AI", "Gaming", "Record & Stream", "Performance", "Smart Technology"]
-     Button {
-      required property int index
-      required property string modelData
-      Layout.fillHeight: true; text: modelData; leftPadding: 16; rightPadding: 16
-      hoverEnabled: true
-      contentItem: Label { text: redlineAppearance.text((parent.text), redlineAppearance.revision); color: appWindow.section === index || parent.hovered ? redlineAppearance.color("white", redlineAppearance.revision) : redlineAppearance.color("#96969b", redlineAppearance.revision); font.pixelSize: 16; verticalAlignment: Text.AlignVCenter }
-      background: Rectangle { color: "transparent"; Rectangle { anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right; anchors.leftMargin: 16; anchors.rightMargin: 16; height: 3; visible: appWindow.section === index; color: redlineAppearance.color("#e90035", redlineAppearance.revision) } }
-      onClicked: appWindow.navigate(index)
+    anchors.fill:parent;spacing:0
+    Button {
+     objectName:"REDLINE_HOME_LOGO";Layout.preferredWidth:64;Layout.fillHeight:true
+     Accessible.name:redlineAppearance.text("Home",redlineAppearance.revision)
+     background:Rectangle{color:"#e90035"}
+     contentItem:Image{source:"qrc:/images/AppIcon";fillMode:Image.PreserveAspectFit;sourceSize.width:64;sourceSize.height:64}
+     padding:6;onClicked:appWindow.navigate(0)
+    }
+    RedlineIconButton {objectName:"REDLINE_BACK";glyph:"back";imageSize:24;text:"Back";Layout.preferredWidth:48;Layout.fillHeight:true;enabled:navigationIndex>0;onClicked:appWindow.travel(-1)}
+    RedlineIconButton {objectName:"REDLINE_FORWARD";glyph:"forward";imageSize:24;text:"Forward";Layout.preferredWidth:48;Layout.fillHeight:true;enabled:navigationIndex<navigation.length-1;onClicked:appWindow.travel(1)}
+    Flickable {
+     id:primaryNavigation;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumWidth:240
+     contentWidth:primaryNavigationRow.width;contentHeight:height;clip:true;boundsBehavior:Flickable.StopAtBounds;flickableDirection:Flickable.HorizontalFlick
+     Row {
+      id:primaryNavigationRow;height:primaryNavigation.height
+      Repeater {
+       id:primaryButtons;model:appWindow.sectionNames.slice(0,6)
+       RedlineNavButton {required property int index;required property string modelData;height:parent.height;objectName:"REDLINE_NAV_"+index;compact:appWindow.width<1380;text:modelData;selected:appWindow.section===index;onClicked:appWindow.navigate(index)}
+      }
      }
+     ScrollBar.horizontal:ScrollBar{policy:primaryNavigation.contentWidth>primaryNavigation.width?ScrollBar.AsNeeded:ScrollBar.AlwaysOff;height:3}
+     function revealSelection(){if(appWindow.section<0 || appWindow.section>=6)return;var item=primaryButtons.itemAt(appWindow.section);if(!item)return;if(item.x<contentX)contentX=item.x;else if(item.x+item.width>contentX+width)contentX=Math.max(0,item.x+item.width-width)}
+     onWidthChanged:Qt.callLater(revealSelection)
+     Connections {target:appWindow;function onSectionChanged(){Qt.callLater(primaryNavigation.revealSelection)}}
     }
-    Item { Layout.fillWidth: true; Layout.minimumWidth: 4 }
     TextField {
-     id: searchField
-     Layout.preferredWidth: appWindow.width < 1250 ? 105 : 150
-     Layout.preferredHeight: 32
-     placeholderText: redlineAppearance.text(("Search"), redlineAppearance.revision); font.pixelSize: 12
-     background: Rectangle { color: redlineAppearance.color("#252528", redlineAppearance.revision); border.color: searchField.activeFocus ? redlineAppearance.color("#77777d", redlineAppearance.revision) : redlineAppearance.color("#39393d", redlineAppearance.revision) }
-     onAccepted: searchDialog.open()
+     id:searchField;objectName:"REDLINE_SEARCH";visible:appWindow.width>=1380;Layout.preferredWidth:180;Layout.preferredHeight:36
+     rightPadding:36;leftPadding:12;font.pixelSize:12;placeholderText:redlineAppearance.text("Search",redlineAppearance.revision)
+     Accessible.name:redlineAppearance.text("Search",redlineAppearance.revision)
+     background:Rectangle{color:"transparent";border.width:2;border.color:redlineAppearance.color(searchField.activeFocus?"#808080":"#404040",redlineAppearance.revision)}
+     onAccepted:searchDialog.open()
+     RedlineIconButton {anchors.right:parent.right;anchors.verticalCenter:parent.verticalCenter;width:34;height:34;imageSize:22;glyph:"search";text:"Search";onClicked:searchDialog.open()}
     }
-    NavIcon { glyph: "search"; text: "Search games"; Layout.preferredWidth: 32; onClicked: searchDialog.open() }
-    NavIcon { glyph: "star"; text: "Favorites"; onClicked: favoritesDialog.open() }
-    NavIcon { glyph: "bell"; text: "Notifications"; onClicked: notificationDialog.open() }
-    NavIcon { glyph: "settings"; text: "Settings"; onClicked: appWindow.navigate(6) }
-    NavIcon { glyph: "menu"; text: "Menu"; onClicked: appMenu.popup() }
+    RedlineIconButton {visible:!searchField.visible;glyph:"search";text:"Search";imageSize:24;Layout.preferredWidth:40;Layout.fillHeight:true;onClicked:searchDialog.open()}
+    RedlineIconButton {objectName:"REDLINE_FEEDBACK";glyph:"star";text:"Feedback";Layout.fillHeight:true;onClicked:feedbackDialog.open()}
+    RedlineIconButton {objectName:"REDLINE_NOTIFICATIONS";glyph:"bell";text:"Notifications";Layout.fillHeight:true;checked:appWindow.section===7;badgeCount:notificationCenter.unreadCount;onClicked:appWindow.navigate(7)}
+    RedlineIconButton {objectName:"REDLINE_SETTINGS";glyph:"settings";text:"Settings";Layout.fillHeight:true;checked:appWindow.section===6;onClicked:appWindow.navigate(6)}
+    RedlineIconButton {objectName:"REDLINE_SIDEBAR";glyph:"menu";text:"Navigation sidebar";Layout.fillHeight:true;checked:navigationDrawer.opened;onClicked:navigationDrawer.opened?navigationDrawer.close():navigationDrawer.open()}
    }
-   Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: redlineAppearance.color("#333337", redlineAppearance.revision) }
   }
   Rectangle {
-   visible: appWindow.sectionTabs[appWindow.section].length>0
-   Layout.fillWidth: true; Layout.preferredHeight: visible ? 38 : 0; color: redlineAppearance.color("#1c1c1f", redlineAppearance.revision)
+   visible:appWindow.sectionTabs[appWindow.section].length>0
+   Layout.fillWidth:true;Layout.preferredHeight:visible?Design.subnavigationHeight:0
+   color:redlineAppearance.color("#202020",redlineAppearance.revision)
    RowLayout {
-    anchors.fill: parent; anchors.leftMargin: 14; spacing: 18
+    anchors.fill:parent;anchors.leftMargin:0;spacing:0
     Repeater {
-     model: appWindow.sectionTabs[appWindow.section]
-     Button {
-      required property string modelData
-      Layout.fillHeight: true; text:modelData;leftPadding:2;rightPadding:2
-      contentItem: Label {text:redlineAppearance.text((parent.text), redlineAppearance.revision);color:appWindow.subSection===parent.text?redlineAppearance.color("#eeeeee", redlineAppearance.revision):redlineAppearance.color("#99999f", redlineAppearance.revision);verticalAlignment:Text.AlignVCenter;font.pixelSize:13}
-      background: Rectangle {color:"transparent";Rectangle{anchors.bottom:parent.bottom;width:parent.width;height:3;color:redlineAppearance.color("#ed003b", redlineAppearance.revision);visible:appWindow.subSection===modelData}}
-      onClicked:appWindow.navigateTo(appWindow.section,modelData,"")
-     }
+     model:appWindow.sectionTabs[appWindow.section]
+     RedlineNavButton {required property string modelData;secondary:true;Layout.fillHeight:true;text:modelData;selected:appWindow.subSection===modelData;onClicked:appWindow.navigateTo(appWindow.section,modelData,"")}
     }
     Item {Layout.fillWidth:true}
-    Label {visible:appWindow.section===4 && appWindow.subSection==="Tuning";text:redlineAppearance.text((redlineReadOnly?"Read-only preview":"Hardware controls"), redlineAppearance.revision);color:redlineAppearance.color("#999", redlineAppearance.revision);rightPadding:14;font.pixelSize:11}
+    Label {visible:appWindow.section===4 && appWindow.subSection==="Tuning";text:redlineAppearance.text(redlineReadOnly?"Read-only preview":"Hardware controls",redlineAppearance.revision);color:redlineAppearance.color("#969696",redlineAppearance.revision);rightPadding:16;font.pixelSize:11}
    }
   }
  }
- Menu {
-  id: appMenu
-  MenuItem { text: "Settings"; onTriggered: appWindow.navigate(6) }
-  MenuItem { text: "About"; onTriggered: aboutDialog.open() }
+ Drawer {
+  id:navigationDrawer;objectName:"REDLINE_NAVIGATION_SIDEBAR";parent:Overlay.overlay;edge:Qt.RightEdge
+  width:300;y:appWindow.header.height;height:appWindow.height-y;modal:false;dim:false
+  background:Rectangle{color:redlineAppearance.color("#202020",redlineAppearance.revision);border.color:redlineAppearance.color("#404040",redlineAppearance.revision)}
+  ScrollView {
+   anchors.fill:parent;contentWidth:availableWidth;clip:true
+   ColumnLayout {
+    width:parent.width;spacing:0
+    Label {text:"REDLINE";font.pixelSize:18;font.bold:true;color:redlineAppearance.color("#eeeeee",redlineAppearance.revision);Layout.margins:20}
+    Repeater {model:appWindow.sectionNames
+     ItemDelegate {id:sidebarEntry;required property int index;required property string modelData;Layout.fillWidth:true;text:redlineAppearance.text(modelData,redlineAppearance.revision);highlighted:appWindow.section===index;contentItem:Label{text:sidebarEntry.text;color:sidebarEntry.highlighted?"white":redlineAppearance.color("#dddddd",redlineAppearance.revision);verticalAlignment:Text.AlignVCenter}
+      onClicked:{appWindow.navigate(index);navigationDrawer.close()}}
+    }
+    Rectangle{Layout.fillWidth:true;Layout.preferredHeight:1;color:redlineAppearance.color("#404040",redlineAppearance.revision)}
+    ItemDelegate {Layout.fillWidth:true;text:redlineAppearance.text("Favorite games",redlineAppearance.revision);onClicked:{navigationDrawer.close();favoritesDialog.open()}}
+    ItemDelegate {Layout.fillWidth:true;text:redlineAppearance.text("About",redlineAppearance.revision);onClicked:{navigationDrawer.close();aboutDialog.open()}}
+   }
+  }
+ }
+ Dialog {
+  id:feedbackDialog;title:redlineAppearance.text("Feedback",redlineAppearance.revision);anchors.centerIn:parent;modal:true;width:480;standardButtons:Dialog.Close
+  ColumnLayout {
+   width:parent.width;spacing:16
+   Label {text:redlineAppearance.text("Report a problem or suggest a feature for Redline.",redlineAppearance.revision);wrapMode:Text.WordWrap;Layout.fillWidth:true}
+   RedlineButton {text:"Open GitHub issues";accent:true;onClicked:{nativeDashboard.openProjectPage("issues");feedbackDialog.close()}}
+  }
  }
  property int preferencesRevision: 0
  property bool animationsEnabled: {var rev=preferencesRevision;return settings.getValue("Ui/animations",true)}
@@ -204,6 +228,24 @@ ApplicationWindow {
   return passed
  }
  function runSettingsSmoke(){return settingsPage.runPreferenceSmoke()}
+ function runShellSmoke(){
+  var oldRoute={section:section,sub:subSection,game:selectedGame};var count=notificationCenter.unreadCount
+  var oldQuery=searchField.text;var oldLanguage=settings.getValue("Ui/language","English")
+  var valid=sectionTabs[3][4]==="Settings" && sectionTabs[4][2]==="Settings"
+  searchField.text="Performance";valid=valid && matchesSearch("Performance")
+  settings.setValue("Ui/language","Ελληνικά");searchField.text="Απόδοση";valid=valid && matchesSearch("Performance")
+  settings.setValue("Ui/language",oldLanguage);searchField.text=oldQuery
+  notificationCenter.add("shell-smoke","Shell test","Temporary test event","information")
+  valid=valid && !notificationCenter.add("shell-smoke","Shell test","Duplicate event","information")
+  valid=valid && notificationCenter.unreadCount===count+1
+  navigate(7);valid=valid && section===7
+  notificationCenter.markRead(0);valid=valid && notificationCenter.unreadCount===count
+  notificationCenter.remove(0);navigationDrawer.open();valid=valid && navigationDrawer.visible
+  navigationDrawer.close();applyRoute(oldRoute)
+  console.log("Redline shell navigation and notification lifecycle smoke: "+(valid?"PASS":"FAIL"));return valid
+ }
+ function previewNotifications(){navigate(7)}
+ function previewSidebar(){navigationDrawer.open()}
  function showDetails(title, message) { detailDialog.title = title; detailText.text = message; detailDialog.open() }
  Dialog {
   id: aboutDialog; objectName: "REDLINE_ABOUT"; title: redlineAppearance.text(("About"), redlineAppearance.revision); anchors.centerIn: parent; modal: true; width: 520; height: 490; padding: 0
@@ -212,10 +254,6 @@ ApplicationWindow {
   Overlay.modal: Rectangle { color: redlineAppearance.color("#aa000000", redlineAppearance.revision) }
   header: Rectangle { height: 56; color: redlineAppearance.color("#25252b", redlineAppearance.revision); Label { anchors.left: parent.left; anchors.leftMargin: 26; anchors.verticalCenter: parent.verticalCenter; text: redlineAppearance.text(("About"), redlineAppearance.revision); font.pixelSize: 23; color: redlineAppearance.color("#eee", redlineAppearance.revision) } ToolButton { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: "×"; onClicked: aboutDialog.close() } }
   footer: Rectangle { height: 64; color: redlineAppearance.color("#25252b", redlineAppearance.revision); RedlineButton { anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 18; text: "Close"; accent: true; onClicked: aboutDialog.close() } }
- }
- Dialog {
-  id: notificationDialog; width:520; title: redlineAppearance.text(("Notifications"), redlineAppearance.revision); anchors.centerIn: parent; modal: true; standardButtons: Dialog.Close
-  Label { width:parent.width;wrapMode:Text.WordWrap; text: redlineAppearance.text((redlineReadOnly ? "Read-only preview. Hardware changes are disabled." : "No new notifications."), redlineAppearance.revision); color: redlineAppearance.color("#bbb", redlineAppearance.revision) }
  }
  Dialog {
   id: detailDialog; anchors.centerIn: parent; modal: true; standardButtons: Dialog.Close; width: 480
@@ -235,8 +273,12 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
  }
  Dialog {
   id: searchDialog; title: redlineAppearance.text(("Search"), redlineAppearance.revision); anchors.centerIn: parent; modal: true; standardButtons: Dialog.Close; width: 480; height: 560
-  ScrollView {
-   anchors.fill: parent; clip:true; contentWidth:availableWidth
+  onOpened:{dialogSearchField.text=searchField.text;dialogSearchField.forceActiveFocus();dialogSearchField.selectAll()}
+  ColumnLayout {
+   anchors.fill:parent
+   TextField {id:dialogSearchField;Layout.fillWidth:true;placeholderText:redlineAppearance.text("Search",redlineAppearance.revision);onTextEdited:searchField.text=text}
+   ScrollView {
+   Layout.fillWidth:true;Layout.fillHeight:true;clip:true;contentWidth:availableWidth
   ColumnLayout {
    width: parent.width
    Repeater {
@@ -244,22 +286,23 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
     Button {
      required property var modelData
      Layout.fillWidth: true
-     visible: searchField.text.length === 0 || modelData.name.toLowerCase().indexOf(searchField.text.toLowerCase()) >= 0
+     visible:appWindow.matchesSearch(modelData.name)
      text: modelData.name
      onClicked: { appWindow.navigateTo(2,"Games",modelData.id); searchDialog.close() }
     }
    }
    Repeater {
     model:appWindow.searchRoutes()
-    RedlineButton {required property var modelData;visible:searchField.text.length===0 || modelData.label.toLowerCase().indexOf(searchField.text.toLowerCase())>=0;text:modelData.label;onClicked:{searchDialog.close();appWindow.navigateTo(modelData.section,modelData.sub,"")}}
+    RedlineButton {required property var modelData;visible:appWindow.matchesSearch(modelData.label);text:modelData.label;onClicked:{searchDialog.close();appWindow.navigateTo(modelData.section,modelData.sub,"")}}
    }
    Label { text: redlineAppearance.text(("Installed games and pages matching: " + searchField.text), redlineAppearance.revision); color: redlineAppearance.color("#999", redlineAppearance.revision); wrapMode: Text.Wrap; Layout.fillWidth: true }
+  }
   }
   }
  }
  StackLayout {
   anchors.fill: parent
-  currentIndex: appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:4
+  currentIndex: appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:4
   RedlineHome {
    onShowDetails:(title,message)=>appWindow.showDetails(title,message)
    onOpenSettings:appWindow.navigate(6)
@@ -275,6 +318,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
    store:uiStore;onOpenHardware:appWindow.openTuning();onDetails:(title,message)=>appWindow.showDetails(title,message)
   }
   Profiles {id:profileUi}
+  RedlineNotifications {objectName:"REDLINE_NOTIFICATIONS_PAGE";center:notificationCenter}
  }
  onClosing: close => { if (!systemTray.isAvailable() || !systemTray.isVisible()) Qt.quit() }
 }

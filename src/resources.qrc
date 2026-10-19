@@ -13,6 +13,11 @@
         <file>qml/icons/menu.svg</file>
         <file>qml/RedlineButton.qml</file>
         <file>qml/images/feature.svg</file>
+        <file>qml/RedlineDesign.js</file>
+        <file>qml/RedlineIconButton.qml</file>
+        <file>qml/RedlineNavButton.qml</file>
+        <file>qml/RedlineNotificationsModel.qml</file>
+        <file>qml/RedlineNotifications.qml</file>
         <file>qml/main.qml</file>
         <file>qml/RedlineLibrary.qml</file>
         <file>qml/RedlineFeaturePage.qml</file>
