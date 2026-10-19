@@ -36,12 +36,23 @@ class GamingTools final:public QObject {
   const auto snap=QDir::homePath()+"/snap/steam/common";
   return QFileInfo::exists(snap)?snap+"/redline/MangoHud.conf":QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/MangoHud.conf";
  }
- Q_INVOKABLE void writeOverlay(QVariantMap opts){
+ static QByteArray overlayConfiguration(const QVariantMap &opts){
   QString position=opts.value("position","top-right").toString();if(!QStringList{"top-left","top-right","bottom-left","bottom-right"}.contains(position))position="top-right";
-  QByteArray data=QString("fps\nframetime\ncpu_stats\ngpu_stats\ncpu_temp\ngpu_temp\nram\nvram\nposition=%1\nfont_size=%2\nbackground_alpha=%3\n").arg(position).arg(qBound(12,opts.value("fontSize",20).toInt(),40)).arg(qBound(0,opts.value("opacity",50).toInt(),100)/100.,0,'f',2).toUtf8();
+  const QStringList allowed{"fps","frametime","cpu_stats","gpu_stats","cpu_temp","gpu_temp","ram","vram","gpu_power","gpu_core_clock","gpu_fan","frame_timing"};
+  const auto metrics=opts.value("metrics").toMap();QByteArray data;
+  // Set every supported flag explicitly: omitted keys otherwise inherit MangoHud defaults.
+  for(int i=0;i<allowed.size();++i)data+=(allowed[i]+"="+(metrics.value(allowed[i],i<8).toBool()?"1":"0")+"\n").toUtf8();
+  QString hotkey=opts.value("hotkey","Shift_R+F12").toString();if(!QStringList{"Shift_R+F12","Shift_R+F11","Control_R+F12"}.contains(hotkey))hotkey="Shift_R+F12";
+  data+=QString("position=%1\nfont_size=%2\nbackground_alpha=%3\nfps_limit=%4\nhorizontal=%5\ntoggle_hud=%6\n").arg(position).arg(qBound(12,opts.value("fontSize",20).toInt(),40)).arg(qBound(0,opts.value("opacity",50).toInt(),100)/100.,0,'f',2).arg(qBound(0,opts.value("fpsLimit",0).toInt(),240)).arg(opts.value("horizontal",false).toBool()?1:0).arg(hotkey).toUtf8();
   if(!opts.value("enabled",true).toBool())data+="no_display\n";
-  QDir().mkpath(QFileInfo(overlayConfigPath()).absolutePath());QFile previous(overlayConfigPath());if(previous.open(QIODevice::ReadOnly)&&previous.readAll()==data)return;QSaveFile file(overlayConfigPath());if(file.open(QIODevice::WriteOnly)){file.write(data);file.commit();}
+  return data;
  }
+ Q_INVOKABLE void writeOverlay(QVariantMap opts){
+  const auto data=overlayConfiguration(opts);
+  QDir().mkpath(QFileInfo(overlayConfigPath()).absolutePath());QFile previous(overlayConfigPath());if(previous.open(QIODevice::ReadOnly)&&previous.readAll()==data)return;
+  QSaveFile file(overlayConfigPath());if(!file.open(QIODevice::WriteOnly) || file.write(data)!=data.size() || !file.commit()){message_="Could not save overlay configuration.";emit changed();}
+ }
+
  QString message()const{return message_;}QString gameModeStatus()const{return gameModeStatus_;}
  Q_INVOKABLE QVariantMap available(QString runtime="native")const{
   bool snap=runtime=="snap",flatpak=runtime=="flatpak";

@@ -19,6 +19,7 @@ ColumnLayout {
   Label {text:launch.tr(launch.tools.overlay?"MangoHud available":"MangoHud unavailable");color:redlineAppearance.color("#999",redlineAppearance.revision);Layout.fillWidth:true}
   Label {text:gamingTools.gameModeStatus;color:redlineAppearance.color("#999",redlineAppearance.revision);font.pixelSize:11}
  }
+ RedlineSettingRow {title:"Gamescope FPS limit";description:"Per-game frame limit. 0 means unlimited.";kind:"choice";choices:["0","30","40","60","90","120","144","165","240"];supported:launch.tools.gamescope && launch.read("launch.gamescope",false);currentValue:String(launch.read("launch.fps",0));onRequested:value=>store.write("launch.fps",Number(value))}
  Label {visible:game.runtime==="snap" && !launch.tools.gamescope;text:launch.tr("Steam Snap: GameMode and MangoHud are available. Gamescope is not available inside this sandbox.");color:redlineAppearance.color("#999",redlineAppearance.revision);wrapMode:Text.WordWrap;Layout.fillWidth:true}
  Label {text:launch.tr("Steam must be closed for automatic connection. Existing options are backed up. Overlay settings apply on the next game launch.");color:redlineAppearance.color("#999",redlineAppearance.revision);wrapMode:Text.WordWrap;Layout.fillWidth:true}
  Label {Layout.fillWidth:true;wrapMode:Text.WordWrap;text:launch.tr(launch.command.length?"Ready to connect selected tools to this game.":"Selected tools are unavailable in this game's runtime.");color:redlineAppearance.color("#999",redlineAppearance.revision)}

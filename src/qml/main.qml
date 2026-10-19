@@ -40,7 +40,7 @@ ApplicationWindow {
   function isFavorite(id) {return read("favorites",[]).indexOf(id)>=0}
   function toggleFavorite(id) {var list=read("favorites",[]);var index=list.indexOf(id);if(index>=0)list.splice(index,1);else list.push(id);write("favorites",list)}
  }
- function syncOverlayPrefs(){nativeDashboard.configureSampling(Number(uiStore.read("perf.interval",1))*1000,Number(uiStore.read("perf.duration",60)));gamingTools.writeOverlay({enabled:uiStore.read("perf.overlay",true),position:uiStore.read("perf.overlay.position","top-right"),fontSize:uiStore.read("perf.overlay.font",20),opacity:uiStore.read("perf.overlay.opacity",50)})}
+ function syncOverlayPrefs(){nativeDashboard.configureSampling(Number(uiStore.read("perf.interval",1))*1000,Number(uiStore.read("perf.duration",60)));gamingTools.writeOverlay({enabled:uiStore.read("perf.overlay",true),position:uiStore.read("perf.overlay.position","top-right"),fontSize:uiStore.read("perf.overlay.font",20),opacity:uiStore.read("perf.overlay.opacity",50),metrics:performancePage.overlayMetrics(),fpsLimit:uiStore.read("perf.overlay.fpsLimit",0),horizontal:uiStore.read("perf.overlay.horizontal",false),hotkey:uiStore.read("perf.overlay.hotkey","Shift_R+F12")})}
  Timer {interval:100;running:true;repeat:false;onTriggered:appWindow.syncOverlayPrefs()}
  function applyRoute(route) {section=route.section;subSection=route.sub;selectedGame=route.game;uiStore.revision++;if(section===4 && subSection==="Tuning")Qt.callLater(function(){profileUi.openGlobalProfile()})}
  function navigate(target) {navigateTo(target,sectionTabs[target][0] || "","")}
@@ -72,7 +72,17 @@ ApplicationWindow {
   console.log("Redline performance visibility smoke: "+(passed?"PASS":"FAIL"))
   nativeDashboard.startLogging()
  }
- function previewOverlay(){nativeDashboard.stopLogging();uiStore.write("perf.metrics.mode","Overlay")}
+ function previewOverlay(){
+  nativeDashboard.stopLogging();uiStore.write("perf.metrics.mode","Overlay")
+  var saved=performancePage.overlayMetrics();var passed=true
+  performancePage.setOverlayProfile("Compact");passed=performancePage.overlayProfile()==="Compact" && !performancePage.overlayMetrics().gpu_temp
+  performancePage.setOverlayProfile("Detailed");passed=passed && performancePage.overlayMetrics().frame_timing
+  uiStore.write("perf.overlay.metric.gpu_fan",false);passed=passed && performancePage.overlayProfile()==="Custom"
+  for(var key in saved)uiStore.write("perf.overlay.metric."+key,saved[key])
+  syncOverlayPrefs()
+  console.log("Redline overlay profile and metric controls smoke: "+(passed?"PASS":"FAIL"))
+ }
+
  function previewFeatures() {navigateTo(3,"Settings","")}
  function previewLibrary() {navigateTo(2,"Games","")}
  function runNavigationSmoke() {
@@ -325,7 +335,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
    onOpenGame:id=>appWindow.navigateTo(2,"Games",id)
   }
   RedlineLibrary {id:gameLibrary;onOpenGlobalDisplay:appWindow.navigateTo(6,"Display","");gameId:appWindow.selectedGame;store:uiStore;onOpenGame:id=>appWindow.navigateTo(2,"Games",id);onOpenHardware:appWindow.openTuning()}
-  System {id:settingsPage;subpage:appWindow.subSection;onShowAbout:aboutDialog.open();onInformation:(title,message)=>appWindow.showDetails(title,message);onPreferenceSaved:message=>appWindow.showSaveToast(message)}
+  System {id:settingsPage;store:uiStore;subpage:appWindow.subSection;onShowAbout:aboutDialog.open();onInformation:(title,message)=>appWindow.showDetails(title,message);onPreferenceSaved:message=>appWindow.showSaveToast(message)}
   RedlinePerformance {id:performancePage;onOpenGaming:appWindow.navigateTo(2,"Games","");store:uiStore;onOpenTuning:appWindow.openTuning()}
   RedlineFeaturePage {
    pageKey:appWindow.sectionNames[appWindow.section]+"/"+(appWindow.subSection==="Capture Settings" || appWindow.subSection==="Metrics Settings"?"Settings":appWindow.subSection)

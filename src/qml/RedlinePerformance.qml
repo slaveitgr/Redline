@@ -10,6 +10,10 @@ Item {
  function tr(s){return redlineAppearance.text(s,redlineAppearance.revision)}
  function shade(s){return redlineAppearance.color(s,redlineAppearance.revision)}
  function shown(key){var r=store.revision;return store.read("perf.visible."+key,true)}
+ property var overlayFields:[{key:"fps",label:"FPS"},{key:"frametime",label:"Frame Time"},{key:"cpu_stats",label:"CPU utilization"},{key:"gpu_stats",label:"GPU utilization"},{key:"cpu_temp",label:"CPU temperature"},{key:"gpu_temp",label:"GPU temperature"},{key:"ram",label:"System memory"},{key:"vram",label:"VRAM used"},{key:"gpu_power",label:"GPU sensor power"},{key:"gpu_core_clock",label:"GPU clock"},{key:"gpu_fan",label:"Fan speed"},{key:"frame_timing",label:"Frame-time graph"}]
+ function overlayMetrics(){var r=store.revision;var result={};for(var i=0;i<overlayFields.length;i++)result[overlayFields[i].key]=store.read("perf.overlay.metric."+overlayFields[i].key,i<8);return result}
+ function setOverlayProfile(name){for(var i=0;i<overlayFields.length;i++){var key=overlayFields[i].key;store.write("perf.overlay.metric."+key,name==="Detailed" || (name==="Balanced" && i<8) || (name==="Compact" && (key==="fps" || key==="gpu_stats" || key==="cpu_stats")))}}
+ function overlayProfile(){var values=overlayMetrics();var names=["Compact","Balanced","Detailed"];for(var n=0;n<names.length;n++){var matches=true;for(var i=0;i<overlayFields.length;i++){var key=overlayFields[i].key;var expected=names[n]==="Detailed" || (names[n]==="Balanced" && i<8) || (names[n]==="Compact" && (key==="fps" || key==="gpu_stats" || key==="cpu_stats"));if(values[key]!==expected)matches=false}if(matches)return names[n]}return "Custom"}
  signal openTuning()
  signal openGaming()
  RowLayout {
@@ -89,11 +93,17 @@ Item {
       ColumnLayout {
        visible:performance.overlayMode;Layout.fillWidth:true;Layout.margins:12;spacing:1
        RedlineSettingRow {title:"Enable Metrics Overlay";kind:"switch";showStateLabel:false;supported:gamingTools.available().overlay || gamingTools.available("snap").overlay;currentValue:{var r=store.revision;return store.read("perf.overlay",true)} onRequested:value=>store.write("perf.overlay",value)}
+       RedlineSettingRow {title:"Overlay profile";kind:"choice";choices:["Compact","Balanced","Detailed","Custom"];currentValue:performance.overlayProfile();onRequested:value=>{if(value!=="Custom")performance.setOverlayProfile(value)}}
+       RedlineSettingRow {title:"Horizontal layout";kind:"switch";showStateLabel:false;currentValue:{var r=store.revision;return store.read("perf.overlay.horizontal",false)} onRequested:value=>store.write("perf.overlay.horizontal",value)}
+       RedlineSettingRow {title:"Overlay hotkey";kind:"choice";choices:["Shift+F12","Shift+F11","Ctrl+F12"];currentValue:{var r=store.revision;return store.read("perf.overlay.hotkey","Shift_R+F12").replace("Shift_R","Shift").replace("Control_R","Ctrl")} onRequested:value=>store.write("perf.overlay.hotkey",value.replace("Shift+","Shift_R+").replace("Ctrl+","Control_R+"))}
+       RedlineSettingRow {title:"FPS limit";description:"All games using this MangoHud configuration. 0 means unlimited.";kind:"choice";choices:["0","30","40","60","90","120","144","165","240"];currentValue:{var r=store.revision;return String(store.read("perf.overlay.fpsLimit",0))} onRequested:value=>store.write("perf.overlay.fpsLimit",Number(value))}
        RedlineSettingRow {title:"Location";kind:"choice";choices:["top-left","top-right","bottom-left","bottom-right"];currentValue:{var r=store.revision;return store.read("perf.overlay.position","top-right")} onRequested:value=>store.write("perf.overlay.position",value)}
        Label {text:performance.tr("Font size");color:performance.shade("#ddd");Layout.topMargin:12}
        Slider {Layout.fillWidth:true;from:12;to:40;stepSize:1;value:{var r=store.revision;return store.read("perf.overlay.font",20)} onMoved:store.write("perf.overlay.font",Math.round(value))}
        Label {text:performance.tr("Background opacity");color:performance.shade("#ddd")}
        Slider {Layout.fillWidth:true;from:0;to:100;stepSize:5;value:{var r=store.revision;return store.read("perf.overlay.opacity",50)} onMoved:store.write("perf.overlay.opacity",Math.round(value))}
+       Label {text:performance.tr("Overlay metrics");color:performance.shade("#ddd");Layout.topMargin:14}
+       Repeater {model:performance.overlayFields;CheckBox {required property var modelData;text:performance.tr(modelData.label);checked:performance.overlayMetrics()[modelData.key];onToggled:store.write("perf.overlay.metric."+modelData.key,checked)}}
        Label {text:performance.tr("MangoHud overlay is available for connected game launches. Open Gaming, select a game and Apply to Steam. Restart the game after changing these settings.");color:performance.shade("#999");wrapMode:Text.WordWrap;Layout.fillWidth:true;Layout.topMargin:12}
        RedlineButton {text:"Open Gaming";Layout.fillWidth:true;onClicked:performance.openGaming()}
        Label {text:performance.tr("GameMode status")+": "+gamingTools.gameModeStatus;color:performance.shade("#999");wrapMode:Text.WordWrap;Layout.fillWidth:true}

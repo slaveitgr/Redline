@@ -7,6 +7,7 @@ import QtQuick.Layouts
 import CoreCtrl.UIComponents 1.0
 Item {
  id: page
+ property var store
  property string subpage: "System"
  property bool expandAll: false
  function expandDetails(){expandAll=true}
@@ -174,7 +175,7 @@ Item {
     visible:page.subpage==="Preferences";Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:(settingsScroll.availableWidth-98)/2;Layout.alignment:Qt.AlignTop;Layout.margins:18;spacing:12
     RedlineSettingsGroup {
      heading:"General"
-     RedlineSettingRow{title:redlineAppearance.text(("In-Game Overlay"), redlineAppearance.revision);description:"Display metrics over a running game";kind:"switch";supported:false;reason:"An in-game overlay service is not connected. A saved request is not an active overlay."}
+     RedlineSettingRow{title:redlineAppearance.text(("In-Game Overlay"), redlineAppearance.revision);description:"MangoHud metrics overlay for connected game launches. Restart the game after changes.";kind:"switch";supported:gamingTools.available().overlay || gamingTools.available("snap").overlay;currentValue:{var r=page.store.revision;return page.store.read("perf.overlay",true)} onRequested:value=>page.store.write("perf.overlay",value)}
      RedlineSettingRow{title:redlineAppearance.text(("Web Browser"), redlineAppearance.revision);kind:"switch";supported:false;reason:"No embedded web browser is included."}
      RedlineSettingRow{objectName:"trayPreference";title:redlineAppearance.text(("System Tray Menu"), redlineAppearance.revision);supported:typeof systemTray!=="undefined" && systemTray.isAvailable();reason:"Requires a desktop system-tray host";description:"Show Redline in the desktop system tray";kind:"switch";currentValue:page.preference("sysTray",true);onRequested:value=>page.updatePreference("sysTray",value)}
      RedlineSettingRow{title:redlineAppearance.text(("Advertisements"), redlineAppearance.revision);kind:"switch";supported:false;reason:"No advertisement service is implemented."}

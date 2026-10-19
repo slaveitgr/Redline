@@ -352,5 +352,21 @@
   "Setup required": "Απαιτείται αρχική ρύθμιση",
   "How can I reduce input lag on Linux?": "Πώς μειώνω την καθυστέρηση χειρισμού στο Linux;",
   "Explain GameMode and Gamescope": "Εξήγησε το GameMode και το Gamescope",
-  "How does MangoHud work?": "Πώς λειτουργεί το MangoHud;"
+  "How does MangoHud work?": "Πώς λειτουργεί το MangoHud;",
+  "Overlay profile": "Προφίλ overlay",
+  "Compact": "Συνοπτικό",
+  "Balanced": "Ισορροπημένο",
+  "Detailed": "Αναλυτικό",
+  "Horizontal layout": "Οριζόντια διάταξη",
+  "Overlay hotkey": "Συντόμευση overlay",
+  "FPS limit": "Όριο FPS",
+  "All games using this MangoHud configuration. 0 means unlimited.": "Για όλα τα παιχνίδια με αυτή τη ρύθμιση MangoHud. Το 0 σημαίνει χωρίς όριο.",
+  "Overlay metrics": "Μετρήσεις overlay",
+  "Frame-time graph": "Γράφημα χρόνου καρέ",
+  "Gamescope FPS limit": "Όριο FPS Gamescope",
+  "Per-game frame limit. 0 means unlimited.": "Όριο καρέ ανά παιχνίδι. Το 0 σημαίνει χωρίς όριο.",
+  "Toggle Metrics Overlay": "Εμφάνιση/απόκρυψη μετρήσεων",
+  "In-game MangoHud shortcut. Restart the game after changing it.": "Συντόμευση MangoHud μέσα στο παιχνίδι. Επανεκκίνησε το παιχνίδι μετά την αλλαγή.",
+  "MangoHud metrics overlay for connected game launches. Restart the game after changes.": "Μετρήσεις MangoHud για συνδεδεμένες εκκινήσεις παιχνιδιών. Επανεκκίνησε το παιχνίδι μετά τις αλλαγές.",
+  "Could not save overlay configuration.": "Δεν ήταν δυνατή η αποθήκευση ρυθμίσεων overlay."
 }

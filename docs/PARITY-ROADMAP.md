@@ -8,7 +8,7 @@ The target is a complete Adrenalin-style Linux application, including navigation
 | --- | --- | --- |
 | Main shell | Shared navigation components, responsive search, vector R branding, back/forward history, session notifications with unread state, feedback and settings actions, navigation drawer | Continue page-specific visual comparisons; implement compact/in-game sidebar window mode and complete keyboard interaction coverage |
 | Home | Three-column dashboard, discovered games, hardware information | Functional recent activity and media; consistent layout at each supported window size |
-| AI / Chat / Apps | Navigation and availability states | A real Linux AI provider and application discovery; no simulated install or chat |
+| AI / Chat / Apps | Session chat and local model discovery via Ollama, optional hardware snapshot | Document retrieval, image generation, real hardware inference validation |
 | Gaming / Games | Installed Steam games, search, sort, favorites, per-game settings, launch recipes | Playtime and game telemetry; persistence and refresh on library changes |
 | Gaming / Graphics | Layout, global/per-game scope, explicit unavailable proprietary settings | Linux implementations for each supported graphics setting; driver-specific detection |
 | Gaming / Advisors | Availability page | Recommendations based on measured sessions |
@@ -16,7 +16,7 @@ The target is a complete Adrenalin-style Linux application, including navigation
 | Live Stream / Scene Editor / Media / Capture Settings | Page structure and saved settings | Real streaming, scenes, media management and coordinated recording state |
 | Performance / Metrics | Live GPU/CPU/RAM sensors, charts, visibility, CSV logs | Game FPS/frame-time provider, per-metric graph/gauge/overlay controls, metric profiles and multi-GPU selection |
 | Performance / Tracking | Hardware sample cadence and actual CSV output | Independent frame-metric interval and full tracking controls |
-| Performance / Overlay | MangoHud launch integration, position, font and opacity settings | Live control where supported, individual metrics, columns, hotkeys and synchronization with general overlay preference |
+| Performance / Overlay | MangoHud launch integration, position, font, opacity, 12 metric flags, layout, profiles, hotkey and FPS limit settings | Live control where supported and column sizing; individual metric flags, profiles, hotkey and shared Preferences switch are implemented |
 | Performance / Tuning | Integrated LACT-derived GPU engine, CoreCtrl CPU controls, supported controls and confirmation/revert flow | Rebuild remaining inherited forms to match the target layout; per-device/per-game state, preset import/export and supported advanced fan/clock controls |
 | Performance / Settings | Graph duration connected to time-based history | Validated custom log directory and hide-overlay-during-logging behavior |
 | Smart Technology | Availability states | Linux equivalents where possible; capability detection rather than enabled-looking placeholders |
