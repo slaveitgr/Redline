@@ -2,6 +2,8 @@
 
 The first native package target is **Ubuntu 26.10 amd64**. The development `.deb` has completed install/remove/reinstall/purge checks in a clean Ubuntu container. Hardware authorization, real GPU writes and desktop-session integration still require interactive testing on each target.
 
+[Download Alpha 1](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.1) includes the locally validated Ubuntu `.deb`, AppImage Preview and SHA256SUMS. Release filenames use `-alpha1`; the Debian package metadata uses `~alpha1` for correct version ordering.
+
 ## Build outputs
 
 | Format / target | Scope |
@@ -27,7 +29,7 @@ On another supported build container, use `--target 'Debian 13 amd64'` to label 
 Install the appropriate verified build with the distribution's package manager:
 
 ```sh
-sudo apt install ./redline-graphics_0.9.0~alpha1_amd64.deb
+sudo apt install ./redline-graphics_0.9.0-alpha1_amd64.deb
 ```
 
 Start **Redline Preview** to inspect the interface without hardware writes. Normal **Redline** uses narrowly scoped services and first-run authorization for the local hardware-access group. Installing/updating optional third-party software can still require normal operating-system authorization.
