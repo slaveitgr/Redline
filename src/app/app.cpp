@@ -3,6 +3,7 @@
 
 #include "app.h"
 #include "nativedashboard.h"
+#include "localassistant.h"
 #include "appearance.h"
 #include "gpubackend.h"
 #include "gamingtools.h"
@@ -197,6 +198,7 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                   QQmlApplicationEngine &qmlEngine)
 {
   qmlEngine.rootContext()->setContextProperty("redlineAppearance", new Appearance(&*settings_, &qmlEngine));
+  qmlEngine.rootContext()->setContextProperty("localAssistant", new LocalAssistant(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("gamingTools", new GamingTools(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("redlineGpu", new GpuBackend(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("nativeDashboard", new NativeDashboard(&qmlEngine));
@@ -315,7 +317,17 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                                               QMetaObject::invokeMethod(mainWindow_, "previewSidebar");
                                               QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk]() {
                                                 mainWindow_->grabWindow().save(previewDir + "/redline-navigation-sidebar.png");
-                                                QApplication::exit(allOk ? 0 : 2);
+                                                QVariant aiResult;
+                                                QMetaObject::invokeMethod(mainWindow_, "runAIHomeSmoke", Q_RETURN_ARG(QVariant, aiResult));
+                                                QMetaObject::invokeMethod(mainWindow_, "previewAIChat");
+                                                QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk, aiResult]() {
+                                                  mainWindow_->grabWindow().save(previewDir + "/redline-ai-chat.png");
+                                                  QMetaObject::invokeMethod(mainWindow_, "previewAIApps");
+                                                  QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk, aiResult]() {
+                                                    mainWindow_->grabWindow().save(previewDir + "/redline-ai-apps.png");
+                                                    QApplication::exit(allOk && aiResult.toBool() ? 0 : 2);
+                                                  });
+                                                });
                                               });
                                             });
                                           });

@@ -392,6 +392,7 @@ set_target_properties(corectrl_lib PROPERTIES OUTPUT_NAME redline-core)
 
 set(CMAKE_AUTOMOC ON)
 add_executable(corectrl
+  app/localassistant.h
   app/nativedashboard.h
   app/appearance.h
   app/gpubackend.h

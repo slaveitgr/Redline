@@ -5,6 +5,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 Item {
  id: home
+ signal openAI(string prompt)
+ signal openGames()
+ signal openCapture()
  signal openGame(string id)
  signal openProfiles()
  signal openPerformance()
@@ -29,11 +32,19 @@ Item {
     }
    }
    RedlineCard {
-    heading: "PROFILE ASSISTANT"; Layout.fillWidth: true; Layout.preferredHeight: home.height < 730 ? 140 : 171
-    RowLayout {
-     anchors.fill: parent; anchors.margins: 20; spacing: 12
-     Small { text: redlineAppearance.text(("Application profiles for your games and workloads"), redlineAppearance.revision); Layout.fillWidth: true }
-     RedlineButton { text: "›"; implicitWidth: 35; onClicked: home.openProfiles() }
+    heading: "LIVE PERFORMANCE"; Layout.fillWidth: true; Layout.preferredHeight: home.height < 730 ? 140 : 171
+    ColumnLayout {
+     anchors.fill:parent;anchors.margins:14;spacing:8
+     RowLayout {
+      Layout.fillWidth:true
+      Repeater {model:[{label:"GPU",key:"gpu"},{label:"Temperature",key:"temperature"}]
+       ColumnLayout {required property var modelData;Layout.fillWidth:true;Layout.preferredWidth:1
+        Small {text:redlineAppearance.text(modelData.label,redlineAppearance.revision)}
+        Label {text:nativeDashboard.metrics[modelData.key] || "N/A";font.pixelSize:20;color:redlineAppearance.color("#eee",redlineAppearance.revision)}
+       }
+      }
+     }
+     RedlineButton {text:"Open Metrics";Layout.fillWidth:true;onClicked:home.openPerformance()}
     }
    }
    RedlineCard {
@@ -56,7 +67,7 @@ Item {
          Label { text: redlineAppearance.text((modelData.symbol), redlineAppearance.revision); font.pixelSize: 28; color: redlineAppearance.color("#854254", redlineAppearance.revision); anchors.horizontalCenter: parent.horizontalCenter }
          Small { text: redlineAppearance.text((modelData.label), redlineAppearance.revision); color: redlineAppearance.color("#77777e", redlineAppearance.revision) }
         }
-        MouseArea { anchors.fill: parent; onClicked: home.showDetails(modelData.label, "Capture is not implemented in this version. No recording has started.") }
+        MouseArea { anchors.fill: parent; onClicked: home.openCapture() }
        }
       }
      }
@@ -66,7 +77,7 @@ Item {
   ColumnLayout {
    Layout.fillWidth: true; Layout.minimumWidth: 350; Layout.fillHeight: true; spacing: 13
    RedlineCard {
-    heading: "GAMES"; Layout.fillWidth: true; Layout.preferredHeight: 354
+    heading: "GAMES"; Layout.fillWidth: true; Layout.preferredHeight: home.height < 730 ? 310 : 354
     RowLayout {
      anchors.fill: parent; spacing: 1
      Repeater {
@@ -77,7 +88,7 @@ Item {
        Layout.fillWidth: true; Layout.fillHeight: true; color: redlineAppearance.color("#252528", redlineAppearance.revision)
        ColumnLayout {
         anchors.fill: parent; spacing: 0
-        Image { source: game.art; Layout.fillWidth: true; Layout.preferredHeight: 115; fillMode: Image.PreserveAspectCrop; clip: true }
+        Image { source: game.art; Layout.fillWidth: true; Layout.preferredHeight: home.height < 730 ? 85 : 115; fillMode: Image.PreserveAspectCrop; clip: true; MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:home.openGame(game.id)} }
         Label { text: game.name; Layout.fillWidth: true; Layout.margins: 12; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight; color: redlineAppearance.color("#ddd", redlineAppearance.revision); font.pixelSize: 15 }
         RowLayout {
          Layout.fillWidth: true
@@ -102,9 +113,16 @@ Item {
        }
       }
      }
-     Small { visible: nativeDashboard.games.length === 0; text: redlineAppearance.text(("No installed Steam games found"), redlineAppearance.revision); Layout.alignment: Qt.AlignCenter }
+     ColumnLayout {visible:nativeDashboard.games.length===0;Layout.fillWidth:true;Layout.fillHeight:true
+      Item {Layout.fillHeight:true}
+      Label {text:"▷";font.pixelSize:44;color:redlineAppearance.color("#999",redlineAppearance.revision);Layout.alignment:Qt.AlignHCenter}
+      Small {text:redlineAppearance.text("No installed Steam games found",redlineAppearance.revision);Layout.alignment:Qt.AlignHCenter}
+      RedlineButton {text:"Browse Games";accent:true;Layout.alignment:Qt.AlignHCenter;onClicked:home.openGames()}
+      Item {Layout.fillHeight:true}
+     }
     }
    }
+   RedlineButton {text:"Browse Games";Layout.fillWidth:true;onClicked:home.openGames()}
    Rectangle {
     Layout.fillWidth: true; Layout.fillHeight: true; color: redlineAppearance.color("#0a0a0c", redlineAppearance.revision); clip: true
     Image { anchors.fill: parent; source: "images/feature.svg"; fillMode: Image.PreserveAspectCrop }
@@ -125,7 +143,7 @@ Item {
       }
       Column { Layout.fillWidth: true; spacing: 7
        Small { text: redlineAppearance.text(("Status"), redlineAppearance.revision)}
-       Label { text: redlineAppearance.text((redlineReadOnly ? "Preview" : "Ready"), redlineAppearance.revision); font.pixelSize: 19; color: redlineAppearance.color("#ddd", redlineAppearance.revision) }
+       Label { text: redlineAppearance.text((redlineReadOnly ? "Preview" : redlineGpu.writable ? "Ready" : "Setup required"), redlineAppearance.revision); font.pixelSize: 19; color: redlineAppearance.color("#ddd", redlineAppearance.revision) }
        Small { text: redlineAppearance.text(("Linux graphics"), redlineAppearance.revision)}
       }
      }
@@ -137,13 +155,13 @@ Item {
     }
    }
    RedlineCard {
-    heading: "SYSTEM ASSISTANT"; Layout.fillWidth: true; Layout.fillHeight: true
+    heading: "REDLINE CHAT"; Layout.fillWidth: true; Layout.fillHeight: true
     ColumnLayout {
      anchors.fill: parent; anchors.margins: 15; spacing: 10
      Item { Layout.fillHeight: true; Layout.minimumHeight: 5 }
      Label { text: redlineAppearance.text(("›"), redlineAppearance.revision); font.pixelSize: 55; color: redlineAppearance.color("#ed003e", redlineAppearance.revision); Layout.alignment: Qt.AlignHCenter }
-     Label { text: redlineAppearance.text(("Ask about your system"), redlineAppearance.revision); color: redlineAppearance.color("#bfbfc4", redlineAppearance.revision); font.pixelSize: 18; Layout.alignment: Qt.AlignHCenter }
-     Small { text: redlineAppearance.text(("Live hardware information"), redlineAppearance.revision); Layout.alignment: Qt.AlignHCenter }
+     Label { text: redlineAppearance.text(("Redline Chat"), redlineAppearance.revision); color: redlineAppearance.color("#bfbfc4", redlineAppearance.revision); font.pixelSize: 18; Layout.alignment: Qt.AlignHCenter }
+     Small { text: redlineAppearance.text(("Your Linux gaming assistant"), redlineAppearance.revision); Layout.alignment: Qt.AlignHCenter }
      Item { Layout.fillHeight: true }
      Repeater {
       model: [{q:"What is my GPU temperature?",key:"temperature",label:"GPU temperature"},{q:"What is my GPU utilization?",key:"gpu",label:"GPU utilization"},{q:"How much memory is in use?",key:"memory",label:"RAM used / total"},{q:"What is my GPU clock?",key:"clock",label:"GPU clock"}]
@@ -151,11 +169,12 @@ Item {
        required property var modelData
        text: modelData.q; Layout.fillWidth: true; implicitHeight: 39
        background: Rectangle { radius: 22; color: parent.hovered ? redlineAppearance.color("#414147", redlineAppearance.revision) : redlineAppearance.color("#303035", redlineAppearance.revision); border.color: redlineAppearance.color("#17171b", redlineAppearance.revision) }
-       onClicked: home.showDetails(modelData.label, nativeDashboard.metrics[modelData.key] || "Not available")
+       onClicked: home.openAI(modelData.q)
       }
      }
      Item { Layout.fillHeight: true }
-     Small { text: redlineAppearance.text((redlineReadOnly ? "Read-only preview · hardware changes disabled" : "Hardware profiles enabled"), redlineAppearance.revision); Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+     RedlineButton {text:"Open Chat";accent:true;Layout.fillWidth:true;onClicked:home.openAI("")}
+     Small {text:redlineAppearance.text("Connect your local AI model",redlineAppearance.revision);Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter}
     }
    }
   }

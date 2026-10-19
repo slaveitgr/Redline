@@ -244,6 +244,17 @@ ApplicationWindow {
   navigationDrawer.close();applyRoute(oldRoute)
   console.log("Redline shell navigation and notification lifecycle smoke: "+(valid?"PASS":"FAIL"));return valid
  }
+ function previewAIChat(){navigationDrawer.close();navigateTo(1,"Chat","")}
+ function previewAIApps(){navigateTo(1,"Apps","")}
+ function runAIHomeSmoke(){
+  var saved={section:section,sub:subSection,game:selectedGame}
+  previewAIChat();aiPage.draft("Explain GameMode and Gamescope")
+  var passed=section===1 && subSection==="Chat" && !localAssistant.busy && !aiPage.includeSensors
+  previewAIApps();passed=passed && subSection==="Apps"
+  navigate(0);passed=passed && section===0
+  aiPage.draft("");applyRoute(saved)
+  console.log("Redline AI and Home navigation smoke: "+(passed?"PASS":"FAIL"));return passed
+ }
  function previewNotifications(){navigate(7)}
  function previewSidebar(){navigationDrawer.open()}
  function showDetails(title, message) { detailDialog.title = title; detailText.text = message; detailDialog.open() }
@@ -302,8 +313,11 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
  }
  StackLayout {
   anchors.fill: parent
-  currentIndex: appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:4
+  currentIndex: appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:4
   RedlineHome {
+   onOpenAI:prompt=>{appWindow.navigateTo(1,"Chat","");aiPage.draft(prompt)}
+   onOpenGames:appWindow.navigateTo(2,"Games","")
+   onOpenCapture:appWindow.navigateTo(3,"Record","")
    onShowDetails:(title,message)=>appWindow.showDetails(title,message)
    onOpenSettings:appWindow.navigate(6)
    onOpenProfiles:appWindow.openTuning()
@@ -319,6 +333,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
   }
   Profiles {id:profileUi}
   RedlineNotifications {objectName:"REDLINE_NOTIFICATIONS_PAGE";center:notificationCenter}
+  RedlineAI {id:aiPage;subpage:appWindow.subSection;store:uiStore;onOpenChat:appWindow.navigateTo(1,"Chat","")}
  }
  onClosing: close => { if (!systemTray.isAvailable() || !systemTray.isVisible()) Qt.quit() }
 }

@@ -24,6 +24,7 @@
         <file>qml/FeatureCatalog.js</file>
         <file>qml/RedlineCard.qml</file>
         <file>qml/RedlineHome.qml</file>
+        <file>qml/RedlineAI.qml</file>
         <file>qml/RedlineMetric.qml</file>
         <file>qml/RedlinePerformance.qml</file>
         <file>qml/RedlineGpuTuning.qml</file>
