@@ -24,6 +24,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QIcon>
+#include <QImage>
 #include <QLocale>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -323,7 +324,9 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                                             mainWindow_->grabWindow().save(previewDir + "/redline-performance-overlay.png");
                                             QVariant shellResult;
                                             QMetaObject::invokeMethod(mainWindow_, "runShellSmoke", Q_RETURN_ARG(QVariant, shellResult));
-                                            const bool allOk = ok && aboutOk && routeOk && settingsOk && appearanceOk && shellResult.toBool();
+                                            const bool svgOk = !QImage(":/qml/icons/bell.svg").isNull();
+                                            qInfo("Redline packaged SVG decoder smoke: %s", svgOk ? "PASS" : "FAIL");
+                                            const bool allOk = svgOk && ok && aboutOk && routeOk && settingsOk && appearanceOk && shellResult.toBool();
                                             QMetaObject::invokeMethod(mainWindow_, "previewNotifications");
                                             QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk]() {
                                               mainWindow_->grabWindow().save(previewDir + "/redline-notifications.png");

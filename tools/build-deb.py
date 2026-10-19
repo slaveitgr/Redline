@@ -75,6 +75,13 @@ def main():
         command = ['dpkg-shlibdeps', '--ignore-missing-info', '-O', '-l' + str(private)] + ['-e' + str(path) for path in binaries if path.is_file()]
         dependencies = subprocess.check_output(command, cwd=build, text=True).strip().split('shlibs:Depends=', 1)[1]
         extra = ['python3 (>= 3.12)', 'python3-gi', 'gir1.2-gstreamer-1.0', 'gstreamer1.0-pipewire', 'gstreamer1.0-plugins-base', 'gstreamer1.0-plugins-good', 'gstreamer1.0-pulseaudio', 'xdg-desktop-portal', 'dbus-user-session', 'pkexec', 'adduser', 'passwd', 'psmisc', 'init-system-helpers', 'qt6-qpa-plugins', 'qt6-wayland', 'libqt6svg6', 'qml6-module-qtquick', 'qml6-module-qtquick-controls', 'qml6-module-qtquick-layouts', 'qml6-module-qtquick-templates', 'qml6-module-qtquick-window', 'qml6-module-qtqml', 'qml6-module-qtqml-models', 'qml6-module-qtqml-workerscript', 'qml6-module-qtcharts', 'qml6-module-qt-labs-platform']
+        plugin_root = Path(subprocess.check_output(['qmake6', '-query', 'QT_INSTALL_PLUGINS'], text=True).strip())
+        svg_plugin = plugin_root / 'imageformats/libqsvg.so'
+        if not svg_plugin.is_file():
+            parser.error('Install the Qt SVG image plugin before packaging')
+        owner = subprocess.check_output(['dpkg-query', '-S', str(svg_plugin)], text=True).split(': ', 1)[0].split(':', 1)[0]
+        if owner not in extra:
+            extra.append(owner)
         metadata = stage / 'DEBIAN'
         metadata.mkdir()
         size = sum(p.stat().st_size for p in stage.rglob('*') if p.is_file()) // 1024

@@ -52,6 +52,9 @@ jobs:
             qml6-module-qtcharts qml6-module-qt-labs-platform \
             dbus dbus-user-session fonts-dejavu-core gir1.2-gstreamer-1.0 \
             gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+          if apt-cache show qt6-svg-plugins >/dev/null 2>&1; then
+            apt-get install -y --no-install-recommends qt6-svg-plugins
+          fi
       - uses: actions/checkout@v4
       - name: Install pinned Rust toolchain
         shell: bash
