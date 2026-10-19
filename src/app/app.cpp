@@ -5,6 +5,7 @@
 #include "nativedashboard.h"
 #include "localassistant.h"
 #include "systemintegration.h"
+#include "vrinstaller.h"
 #include "settingssnapshots.h"
 #include "appearance.h"
 #include "gpubackend.h"
@@ -201,7 +202,11 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
 {
   qmlEngine.rootContext()->setContextProperty("redlineAppearance", new Appearance(&*settings_, &qmlEngine));
   qmlEngine.rootContext()->setContextProperty("settingsSnapshots", new SettingsSnapshots(&*settings_, &qmlEngine));
-  qmlEngine.rootContext()->setContextProperty("systemIntegration", new SystemIntegration(&qmlEngine));
+  auto integration = new SystemIntegration(&qmlEngine);
+  auto installer = new VrInstaller(&qmlEngine);
+  QObject::connect(installer, &VrInstaller::installed, integration, &SystemIntegration::refresh);
+  qmlEngine.rootContext()->setContextProperty("vrInstaller", installer);
+  qmlEngine.rootContext()->setContextProperty("systemIntegration", integration);
   qmlEngine.rootContext()->setContextProperty("localAssistant", new LocalAssistant(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("gamingTools", new GamingTools(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("redlineGpu", new GpuBackend(&qmlEngine));
@@ -332,7 +337,11 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                                                     QMetaObject::invokeMethod(mainWindow_, "previewSnapshots");
                                                     QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk, aiResult]() {
                                                       mainWindow_->grabWindow().save(previewDir + "/redline-settings-snapshots.png");
-                                                      QApplication::exit(allOk && aiResult.toBool() ? 0 : 2);
+                                                      QMetaObject::invokeMethod(mainWindow_, "previewVRInstall");
+                                                      QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk, aiResult]() {
+                                                        mainWindow_->grabWindow().save(previewDir + "/redline-vr-installer.png");
+                                                        QApplication::exit(allOk && aiResult.toBool() ? 0 : 2);
+                                                      });
                                                     });
                                                   });
                                                 });

@@ -21,7 +21,7 @@ ScrollView {
    Label { text: redlineAppearance.text((page.pageKey.replace("/", " / ")), redlineAppearance.revision); font.pixelSize: 21; color: redlineAppearance.color("#eee", redlineAppearance.revision); Layout.fillWidth: true }
    RedlineButton { text: "GPU / CPU controls ›"; accent: true; visible: page.hardwarePage; onClicked: page.openHardware() }
   }
-  Label { text: redlineAppearance.text((page.hardwarePage ? "Availability depends on your Linux hardware and backend. Open GPU / CPU controls for supported tuning." : "Preferences are saved in Redline. Capture, streaming and AI services are not connected yet."), redlineAppearance.revision); wrapMode: Text.WordWrap; color: redlineAppearance.color("#999", redlineAppearance.revision); Layout.fillWidth: true; Layout.margins: 14 }
+  Label { text: redlineAppearance.text((page.hardwarePage ? "Availability depends on your Linux hardware and backend. Open GPU / CPU controls for supported tuning." : "Capture and streaming are not connected. These controls save setup preferences only; no recording or broadcast starts."), redlineAppearance.revision); wrapMode: Text.WordWrap; color: redlineAppearance.color("#999", redlineAppearance.revision); Layout.fillWidth: true; Layout.margins: 14 }
   RedlineSettingRow {
    visible:page.pageKey==="Settings/Hotkeys";Layout.leftMargin:14;Layout.rightMargin:14
    title:"Toggle Metrics Overlay";description:"In-game MangoHud shortcut. Restart the game after changing it.";kind:"choice";choices:["Shift+F12","Shift+F11","Ctrl+F12"]

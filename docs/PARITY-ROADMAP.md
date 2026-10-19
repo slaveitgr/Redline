@@ -24,7 +24,7 @@ The target is a complete Adrenalin-style Linux application, including navigation
 | Settings / Display | Connected-display discovery and desktop settings integration | Compositor-aware color, scaling, VRR and supported per-display settings |
 | Settings / Audio & Video | Page structure | Linux audio processing and video profiles |
 | Settings / Hotkeys | Availability states | Bindings tied to implemented actions, conflict handling and Wayland support |
-| Settings / ReLive VR | SteamVR status, native ALVR/WiVRn and WiVRn Flatpak detection, explicit dashboard launch | Direct headset/session/settings integration and headset validation; the AMD Windows runtime is not portable as-is |
+| Settings / ReLive VR | SteamVR status, native ALVR/WiVRn and WiVRn Flatpak detection, explicit dashboard launch, ALVR launcher and WiVRn installation actions | Direct headset/session/settings integration and headset validation; the AMD Windows runtime is not portable as-is |
 | Settings / Preferences | Dark/light theme, Greek/English core UI, Redline tray branding and saved preferences | Complete translations, audit every toggle for real effects and remove inactive settings from enabled control states |
 | Distribution | Independent application IDs, source builds, scoped service/package files in development | Finish Debian package build, install/upgrade/removal verification, authorization lifecycle and release automation |
 

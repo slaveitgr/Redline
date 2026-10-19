@@ -10,6 +10,8 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QTimer>
+#include <QJsonDocument>
+#include <QJsonObject>
 class SystemIntegration final:public QObject {
  Q_OBJECT
  Q_PROPERTY(QVariantMap driver READ driver NOTIFY changed)
@@ -32,6 +34,7 @@ class SystemIntegration final:public QObject {
    devices.append(QVariantMap{{"card",card},{"vendor",read(base+"/vendor")},{"device",read(base+"/device")},{"driver",QFileInfo(QFileInfo(base+"/driver").symLinkTarget()).fileName()}});
   }driver_["devices"]=devices;
   vr_.clear();for(const auto &name:QStringList{"alvr_dashboard","alvr_launcher","wivrn-dashboard","wivrn-server"})vr_[name]=QStandardPaths::findExecutable(name);
+  if(vr_.value("alvr_launcher").toString().isEmpty())vr_["alvr_launcher"]=managedLauncher();
   vr_["wivrnFlatpak"]=flatpakInstalled("io.github.wivrn.wivrn");emit changed();
   if(packagesPending_)return;auto exe=QStandardPaths::findExecutable("dpkg-query");if(exe.isEmpty()){driver_["packages"]="Package version detection unavailable";emit changed();return;}
   packagesPending_=true;auto p=new QProcess(this);
@@ -41,18 +44,23 @@ class SystemIntegration final:public QObject {
   p->start(exe,{"-W","-f=${binary:Package}\t${db:Status-Status}\t${Version}\n","libgl1-mesa-dri","mesa-vulkan-drivers","amdgpu-install","amdgpu-dkms","vulkan-amdgpu-pro"});
  }
  Q_INVOKABLE bool openReference(QString key){
-  const QMap<QString,QString> urls{{"amd","https://www.amd.com/en/support/download/linux-drivers.html"},{"release","https://www.amd.com/en/resources/support-articles/release-notes/RN-AMDGPU-UNIFIED-LINUX-26-16.html"},{"alvr","https://github.com/alvr-org/ALVR/wiki/Installation-guide"},{"wivrn","https://github.com/WiVRn/WiVRn#Getting-started"}};
+  const QMap<QString,QString> urls{{"flatpak","https://flathub.org/setup"},{"amd","https://www.amd.com/en/support/download/linux-drivers.html"},{"release","https://www.amd.com/en/resources/support-articles/release-notes/RN-AMDGPU-UNIFIED-LINUX-26-16.html"},{"alvr","https://github.com/alvr-org/ALVR/wiki/Installation-guide"},{"wivrn","https://github.com/WiVRn/WiVRn#Getting-started"}};
   return urls.contains(key) && QDesktopServices::openUrl(QUrl(urls.value(key)));
  }
  Q_INVOKABLE bool launchVR(QString backend){
   QString exe;QStringList args;
-  if(backend=="ALVR"){exe=QStandardPaths::findExecutable("alvr_dashboard");if(exe.isEmpty())exe=QStandardPaths::findExecutable("alvr_launcher");}
+  if(backend=="ALVR"){exe=QStandardPaths::findExecutable("alvr_dashboard");if(exe.isEmpty())exe=QStandardPaths::findExecutable("alvr_launcher");if(exe.isEmpty())exe=managedLauncher();}
   else if(backend=="WiVRn"){exe=QStandardPaths::findExecutable("wivrn-dashboard");if(exe.isEmpty() && flatpakInstalled("io.github.wivrn.wivrn")){exe=QStandardPaths::findExecutable("flatpak");args={"run","io.github.wivrn.wivrn"};}}
   if(exe.isEmpty()){message_="VR dashboard not installed or not detected.";emit changed();return false;}
-  bool ok=QProcess::startDetached(exe,args);message_=ok?"VR dashboard launched. Pair the headset in that application.":"Could not launch the VR dashboard.";emit changed();return ok;
+  bool ok=QProcess::startDetached(exe,args,QFileInfo(exe).absolutePath());message_=ok?"VR dashboard launched. Pair the headset in that application.":"Could not launch the VR dashboard.";emit changed();return ok;
  }
  private:
  QVariantMap driver_,vr_;QString message_;bool packagesPending_=false;
+ static QString managedLauncher(){
+  auto root=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+"/vr/alvr";QFile file(root+"/redline-install.json");if(!file.open(QIODevice::ReadOnly) || file.size()>16384)return {};
+  auto relative=QJsonDocument::fromJson(file.readAll()).object().value("launcher").toString();if(relative.isEmpty() || QDir::isAbsolutePath(relative) || relative.split('/').contains(".."))return {};
+  QFileInfo info(root+"/"+relative);return info.isExecutable() && info.canonicalFilePath().startsWith(QFileInfo(root).canonicalFilePath()+"/")?info.canonicalFilePath():QString();
+ }
  static QString read(QString path){QFile f(path);return f.open(QIODevice::ReadOnly)?QString::fromUtf8(f.readAll()).trimmed():QString();}
  static bool flatpakInstalled(const QString &id){
   if(QStandardPaths::findExecutable("flatpak").isEmpty())return false;

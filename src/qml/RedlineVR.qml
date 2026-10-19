@@ -9,6 +9,7 @@ ColumnLayout {
  property bool alvrAvailable:Boolean(systemIntegration.vr.alvr_dashboard || systemIntegration.vr.alvr_launcher)
  property bool wivrnAvailable:Boolean(systemIntegration.vr["wivrn-dashboard"] || systemIntegration.vr.wivrnFlatpak)
  property bool selectedAvailable:backend==="ALVR"?alvrAvailable:wivrnAvailable
+ function showInstaller(target){installDialog.target=target;installDialog.open()}
  function tr(s){return redlineAppearance.text(s,redlineAppearance.revision)}
  function shade(s){return redlineAppearance.color(s,redlineAppearance.revision)}
  spacing:18
@@ -20,6 +21,28 @@ ColumnLayout {
   RedlineButton {text:"VR Settings";accent:true;enabled:page.selectedAvailable;onClicked:systemIntegration.launchVR(page.backend)}
  }
  Label {text:page.tr("ReLive VR-style workspace · Linux streaming through ALVR or WiVRn. AMD's Windows ReLive server is not running here.");color:page.shade("#999");wrapMode:Text.WordWrap;Layout.fillWidth:true}
+ RedlineSettingsGroup {
+  heading:"VR software"
+  Repeater {model:[{name:"ALVR",ready:page.alvrAvailable},{name:"WiVRn",ready:page.wivrnAvailable}]
+   RowLayout {required property var modelData;Layout.fillWidth:true;Layout.margins:12
+    Label {text:modelData.name;color:page.shade("#ddd");font.pixelSize:16;Layout.fillWidth:true}
+    Label {text:page.tr(modelData.ready?"Installed":"Not installed");color:page.shade("#999")}
+    RedlineButton {text:modelData.ready?"Open":"Install";accent:!modelData.ready;enabled:!vrInstaller.busy;onClicked:{if(modelData.ready)systemIntegration.launchVR(modelData.name);else{installDialog.target=modelData.name;installDialog.open()}}}
+   }
+  }
+  ProgressBar {visible:vrInstaller.busy;Layout.fillWidth:true;indeterminate:vrInstaller.progress<0;from:0;to:100;value:vrInstaller.progress}
+  Label {text:page.tr(vrInstaller.message);visible:text.length>0;color:page.shade("#aaa");wrapMode:Text.WordWrap;Layout.fillWidth:true;Layout.margins:12}
+  RedlineButton {text:"Flatpak setup ↗";visible:!page.wivrnAvailable;onClicked:systemIntegration.openReference("flatpak")}
+ }
+ Dialog {
+  id:installDialog;property string target:"ALVR";parent:Overlay.overlay;anchors.centerIn:parent;modal:true;width:540;title:page.tr("Install")+" "+target
+  ColumnLayout {width:parent.width;spacing:12
+   Label {text:page.tr(installDialog.target==="ALVR"?"Download the official ALVR launcher from GitHub into your Redline user data folder. The launcher will guide you through the remaining setup.":"Install WiVRn from your existing Flathub source. A system installation may ask for administrator approval. Missing Flatpak or Flathub requires the setup guide first.");wrapMode:Text.WordWrap;Layout.fillWidth:true;color:page.shade("#ddd")}
+   Label {text:page.tr("This installs the PC software. You will still need the matching headset app and pairing setup.");wrapMode:Text.WordWrap;Layout.fillWidth:true;color:page.shade("#aaa")}
+   Label {visible:redlineReadOnly;text:page.tr("Installation is disabled in UI preview. Open normal Redline.");wrapMode:Text.WordWrap;Layout.fillWidth:true;color:page.shade("#aaa")}
+  }
+  footer:Item {implicitHeight:64;RowLayout {anchors.fill:parent;anchors.margins:12;Item{Layout.fillWidth:true}RedlineButton{text:"Cancel";onClicked:installDialog.close()}RedlineButton{text:"Install";accent:true;enabled:!redlineReadOnly && !vrInstaller.busy;onClicked:{vrInstaller.install(installDialog.target);installDialog.close()}}}}
+ }
  RedlineSettingsGroup {
   heading:"Integration"
   RedlineSettingRow {title:"Linux VR backend";kind:"choice";choices:["ALVR","WiVRn"];currentValue:page.backend;onRequested:value=>page.store.write("vr.backend",value)}

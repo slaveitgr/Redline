@@ -24,6 +24,7 @@ Item {
  signal showAbout()
  signal information(string title,string message)
  signal preferenceSaved(string message)
+ function showVRInstall(){snapshotDialog.close();vrPage.showInstaller("ALVR")}
  function showSnapshots(){snapshotDialog.showSnapshots()}
  function preference(key,fallback) {var rev=preferencesRevision;return settings.getValue(key,fallback)}
  function updatePreference(key,value) {settings.setValue(key,value);page.preferenceSaved("Preference saved")}
@@ -138,7 +139,7 @@ Item {
     RedlineSettingsGroup {
      heading:"Display Options"
      RedlineSettingRow{title:redlineAppearance.text(("Adaptive Sync"), redlineAppearance.revision);description:"Variable refresh rate";kind:"switch";supported:false;reason:"No verified compositor capability is connected for this display."}
-     RedlineSettingRow{title:redlineAppearance.text(("Virtual Super Resolution"), redlineAppearance.revision);kind:"switch";supported:false;reason:"AMD Windows driver feature; no Redline implementation is connected."}
+     RedlineSettingRow{title:redlineAppearance.text(("Virtual Super Resolution"), redlineAppearance.revision);kind:"switch";supported:false;description:"Per-game supersampling needs a separate Linux implementation.";reason:"Desktop-wide VSR control is not connected in Redline."}
      RedlineSettingRow{title:redlineAppearance.text(("GPU Scaling"), redlineAppearance.revision);kind:"switch";supported:false;reason:"GPU scaling is not exposed through the current Redline display backend."}
      RedlineSettingRow{title:redlineAppearance.text(("Scaling Mode"), redlineAppearance.revision);kind:"choice";choices:["Not available"];supported:false;reason:"Use Ubuntu display settings for desktop scaling."}
      RedlineSettingRow{title:redlineAppearance.text(("Integer Scaling"), redlineAppearance.revision);currentValue:"Not available";supported:false;reason:"No integer-scaling capability is connected."}
@@ -215,6 +216,7 @@ Item {
     Item{Layout.fillHeight:true}
    }
    RedlineVR {
+    id:vrPage
     store:page.store
     visible:page.subpage==="ReLive VR";Layout.columnSpan:2;Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:settingsScroll.availableWidth-36;Layout.maximumWidth:settingsScroll.availableWidth-36;Layout.alignment:Qt.AlignLeft|Qt.AlignTop;Layout.margins:18
    }

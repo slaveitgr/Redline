@@ -266,6 +266,7 @@ ApplicationWindow {
   aiPage.draft("");applyRoute(saved)
   console.log("Redline AI and Home navigation smoke: "+(passed?"PASS":"FAIL"));return passed
  }
+ function previewVRInstall(){navigateTo(6,"ReLive VR","");settingsPage.showVRInstall()}
  function previewSnapshots(){navigateTo(6,"System","");settingsPage.showSnapshots()}
  function previewNotifications(){navigate(7)}
  function previewSidebar(){navigationDrawer.open()}
