@@ -1,0 +1,102 @@
+name: Linux development packages
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-packages.yml'
+      - 'src/**'
+      - '3rdparty/**'
+      - 'cmake/**'
+      - 'resources/**'
+      - 'tools/**'
+      - 'packaging/**'
+      - 'CMakeLists.txt'
+      - 'build-*.sh'
+permissions:
+  contents: read
+concurrency:
+  group: linux-packages-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: ${{ matrix.name }} amd64
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu-26.10
+            image: ubuntu:26.10
+            target: Ubuntu 26.10 amd64
+          - name: Debian-13
+            image: debian:trixie
+            target: Debian 13 amd64
+    steps:
+      - name: Install build dependencies in disposable container
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates curl git build-essential cmake pkg-config clang libclang-dev \
+            dpkg-dev file patchelf desktop-file-utils python3 python3-gi \
+            qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools \
+            qt6-charts-dev qt6-svg-dev qt6-tools-dev qt6-tools-dev-tools \
+            libquazip1-qt6-dev libbotan-3-dev libspdlog-dev libpugixml-dev \
+            libpolkit-gobject-1-dev libglib2.0-dev libdrm-dev libudev-dev libvulkan-dev \
+            libgl-dev hwdata pciutils qt6-qpa-plugins qt6-wayland \
+            qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-layouts \
+            qml6-module-qtquick-templates qml6-module-qtquick-window qml6-module-qtqml \
+            qml6-module-qtqml-models qml6-module-qtqml-workerscript \
+            qml6-module-qtcharts qml6-module-qt-labs-platform \
+            dbus dbus-user-session fonts-dejavu-core gir1.2-gstreamer-1.0 \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu
+          curl --proto '=https' --tlsv1.2 -fsSLo /tmp/rustup-init "$base/rustup-init"
+          curl --proto '=https' --tlsv1.2 -fsSLo /tmp/rustup-init.sha256 "$base/rustup-init.sha256"
+          (cd /tmp && sha256sum -c rustup-init.sha256)
+          chmod +x /tmp/rustup-init
+          /tmp/rustup-init -y --profile minimal --default-toolchain 1.97.0
+      - name: Build native application and GPU engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          source "$HOME/.cargo/env"
+          ./build-redline.sh
+          ./build-gpu-engine.sh
+      - name: Validate display, installer and encoder without hardware changes
+        run: |
+          python3 -m unittest discover -s tests -p test_display_backend.py
+          python3 -m unittest discover -s tests -p test_vr_install.py
+          python3 -m unittest discover -s tests -p test_redline_steam_options.py
+          python3 -m unittest discover -s tests -p test_capture_pipeline.py
+      - name: Exercise native interface without hardware writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci/config .ci/cache .ci/data .ci/screenshots
+          dbus-run-session -- env QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+            XDG_CONFIG_HOME="$PWD/.ci/config" XDG_CACHE_HOME="$PWD/.ci/cache" \
+            XDG_DATA_HOME="$PWD/.ci/data" REDLINE_PREVIEW_DIR="$PWD/.ci/screenshots" \
+            timeout 60 ./run-preview.sh
+      - name: Build native Debian package
+        run: python3 tools/build-deb.py --target '${{ matrix.target }}'
+      - name: Build AppImage preview
+        env:
+          QMAKE: /usr/bin/qmake6
+        run: python3 tools/build-appimage.py
+      - name: Generate checksums
+        run: cd dist && sha256sum *.deb *.AppImage > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Redline-${{ matrix.name }}-amd64-development
+          path: dist/*
+          if-no-files-found: warn
+          retention-days: 30

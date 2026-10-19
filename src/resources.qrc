@@ -34,6 +34,8 @@
         <file>qml/RedlineDriverStatus.qml</file>
         <file>qml/RedlineSnapshotDialog.qml</file>
         <file>qml/RedlineVR.qml</file>
+        <file>qml/RedlineCapture.qml</file>
+        <file>qml/RedlineDisplay.qml</file>
         <file>qml/RedlineSettingRow.qml</file>
         <file>qml/RedlineSettingsGroup.qml</file>
         <file>qml/CComboBox.qml</file>

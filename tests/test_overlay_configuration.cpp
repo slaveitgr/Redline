@@ -12,5 +12,7 @@ int main(int argc,char **argv){
  GamingTools tools;tools.writeOverlay(opts);QFile file(tools.overlayConfigPath());check(file.open(QIODevice::ReadOnly) && file.readAll()==changed,"settings written to isolated runtime config");
  QFile fake(temp.path()+"/gamescope");check(fake.open(QIODevice::WriteOnly),"test executable created");fake.write("#!/bin/sh\nexit 0\n");fake.close();fake.setPermissions(QFile::ReadOwner|QFile::WriteOwner|QFile::ExeOwner);qputenv("PATH",temp.path().toUtf8()+":"+qgetenv("PATH"));
  auto recipe=tools.recipe({{"gamescope",true},{"overlay",false},{"fpsLimit",60}},"native");check(recipe.contains("gamescope -f -r 60 -- %command%"),"per-game Gamescope limiter connected");
+ auto scaling=tools.recipe({{"gamescope",true},{"renderSize","1280x720"},{"outputSize","1920x1080"},{"scaler","integer"},{"filter","fsr"}},"native");check(scaling.contains("-w 1280 -h 720") && scaling.contains("-W 1920 -H 1080") && scaling.contains("-S integer") && scaling.contains("-F fsr"),"Gamescope scaling arguments");
+ auto rejected=tools.recipe({{"gamescope",true},{"renderSize","1920x1080;bad"},{"scaler","integer;bad"},{"filter","fsr;bad"}},"native");check(!rejected.contains("bad") && !rejected.contains("-S ") && !rejected.contains("-F "),"Gamescope scaling allowlist");
  puts("Overlay configuration: PASS (metric flags, presets primitives, limiter, hotkey, validation, persisted file)");
 }

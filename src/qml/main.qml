@@ -208,7 +208,7 @@ ApplicationWindow {
   exit:Transition{NumberAnimation{property:"opacity";from:1;to:0;duration:appWindow.animationsEnabled?140:0}}
  }
  Timer{id:toastTimer;interval:2200;onTriggered:saveToast.close()}
- function previewSettingsDisplay(){navigateTo(6,"Display","")}
+ function previewSettingsDisplay(){width=1460;height=920;navigateTo(6,"Display","")}
  function previewSettingsPreferences(){navigateTo(6,"Preferences","")}
  function previewSystemExpanded(){navigateTo(6,"System","");settingsPage.expandDetails()}
  function previewLightGreek(){settings.setValue("Ui/theme","Light");settings.setValue("Ui/language","Ελληνικά");navigateTo(6,"Preferences","")}
@@ -326,7 +326,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
  }
  StackLayout {
   anchors.fill: parent
-  currentIndex: appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:4
+  currentIndex: appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:appWindow.section===3 && (["Record","Media","Settings"].indexOf(appWindow.subSection)>=0)?8:4
   RedlineHome {
    onOpenAI:prompt=>{appWindow.navigateTo(1,"Chat","");aiPage.draft(prompt)}
    onOpenGames:appWindow.navigateTo(2,"Games","")
@@ -338,7 +338,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
    onOpenGame:id=>appWindow.navigateTo(2,"Games",id)
   }
   RedlineLibrary {id:gameLibrary;onOpenGlobalDisplay:appWindow.navigateTo(6,"Display","");gameId:appWindow.selectedGame;store:uiStore;onOpenGame:id=>appWindow.navigateTo(2,"Games",id);onOpenHardware:appWindow.openTuning()}
-  System {id:settingsPage;store:uiStore;subpage:appWindow.subSection;onShowAbout:aboutDialog.open();onInformation:(title,message)=>appWindow.showDetails(title,message);onPreferenceSaved:message=>appWindow.showSaveToast(message)}
+  System {id:settingsPage;onOpenGames:appWindow.navigateTo(2,"Games","");store:uiStore;subpage:appWindow.subSection;onShowAbout:aboutDialog.open();onInformation:(title,message)=>appWindow.showDetails(title,message);onPreferenceSaved:message=>appWindow.showSaveToast(message)}
   RedlinePerformance {id:performancePage;onOpenGaming:appWindow.navigateTo(2,"Games","");store:uiStore;onOpenTuning:appWindow.openTuning()}
   RedlineFeaturePage {
    pageKey:appWindow.sectionNames[appWindow.section]+"/"+(appWindow.subSection==="Capture Settings" || appWindow.subSection==="Metrics Settings"?"Settings":appWindow.subSection)
@@ -347,6 +347,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
   Profiles {id:profileUi}
   RedlineNotifications {objectName:"REDLINE_NOTIFICATIONS_PAGE";center:notificationCenter}
   RedlineAI {id:aiPage;subpage:appWindow.subSection;store:uiStore;onOpenChat:appWindow.navigateTo(1,"Chat","")}
+  RedlineCapture {subpage:appWindow.subSection;store:uiStore}
  }
  onClosing: close => { if (!systemTray.isAvailable() || !systemTray.isVisible()) Qt.quit() }
 }

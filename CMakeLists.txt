@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(Redline HOMEPAGE_URL "https://gitlab.com/corectrl/corectrl")
+project(Redline HOMEPAGE_URL "https://github.com/slaveitgr/Redline")
 set(PROJECT_VERSION 0.9.0)
 set(PROJECT_ORG "io.github.redline.native")
 set(APP_FULL_NAME "${PROJECT_ORG}.Redline")

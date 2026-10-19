@@ -1,0 +1,15 @@
+[Unit]
+Description=Redline CPU helper recovery
+[Service]
+Type=dbus
+BusName=io.github.redline.native.helperkiller
+Environment=LD_LIBRARY_PATH=/usr/lib/redline
+ExecStart=/usr/libexec/redline/redline_helperkiller
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes

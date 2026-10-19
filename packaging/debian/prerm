@@ -1,5 +1,5 @@
 #!/bin/sh
 set -e
 case "$1" in remove|deconfigure)
- if [ -d /run/systemd/system ]; then deb-systemd-invoke stop redline-gpu.socket redline-cpu.service; fi
+ if [ -d /run/systemd/system ]; then deb-systemd-invoke stop redline-gpu.socket redline-cpu.service redline-cpu-killer.service; systemctl stop 'redline-gpu@*.service' || true; fi
  ;; esac

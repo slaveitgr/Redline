@@ -393,6 +393,8 @@ set_target_properties(corectrl_lib PROPERTIES OUTPUT_NAME redline-core)
 set(CMAKE_AUTOMOC ON)
 add_executable(corectrl
   app/settingssnapshots.h
+  app/capturebackend.h
+  app/displaybackend.h
   app/vrinstaller.h
   app/systemintegration.h
   app/localassistant.h
@@ -438,5 +440,8 @@ install(
 
 add_subdirectory(helper)
 
+install(PROGRAMS "${PROJECT_SOURCE_DIR}/tools/redline-capture.py" DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/redline")
 install(PROGRAMS "${PROJECT_SOURCE_DIR}/tools/redline-vr-install.py" DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/redline")
 install(PROGRAMS "${PROJECT_SOURCE_DIR}/tools/redline-steam-options.py" DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/redline")
+
+install(PROGRAMS "${PROJECT_SOURCE_DIR}/tools/redline-display.py" DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/redline")

@@ -69,7 +69,12 @@ class GamingTools final:public QObject {
   if(hud){QString path=overlayConfigPath();path.replace("'","'\\''");parts<<"MANGOHUD_CONFIGFILE='"+path+"'";}
 
   if(gm)parts<<"gamemoderun";
-  if(gs){parts<<"gamescope"<<"-f";if(hud)parts<<"--mangoapp";int fps=qBound(0,opts.value("fpsLimit",0).toInt(),240);if(fps>0)parts<<"-r"<<QString::number(fps);parts<<"--";}
+  if(gs){parts<<"gamescope"<<"-f";
+   const QStringList resolutions{"1280x720","1600x900","1920x1080","2560x1440","3840x2160"};
+   for(auto pair:QList<QPair<QString,QString>>{{"renderSize","-w"},{"outputSize","-W"}}){auto size=opts.value(pair.first).toString();if(resolutions.contains(size)){auto dimensions=size.split('x');parts<<pair.second<<dimensions[0]<<(pair.second=="-w"?"-h":"-H")<<dimensions[1];}}
+   auto scaler=opts.value("scaler","auto").toString();if(QStringList{"integer","fit","fill","stretch"}.contains(scaler))parts<<"-S"<<scaler;
+   auto filter=opts.value("filter","linear").toString();if(QStringList{"nearest","fsr","nis"}.contains(filter))parts<<"-F"<<filter;
+if(hud)parts<<"--mangoapp";int fps=qBound(0,opts.value("fpsLimit",0).toInt(),240);if(fps>0)parts<<"-r"<<QString::number(fps);parts<<"--";}
   else if(hud)parts<<"mangohud";
   parts<<"%command%";return parts.join(' ');
  }

@@ -21,6 +21,7 @@ Item {
  property int preferencesRevision: 0
  property int displayIndex: 0
  property var screen: nativeDashboard.displays.length ? nativeDashboard.displays[Math.min(displayIndex,nativeDashboard.displays.length-1)] : ({})
+ signal openGames()
  signal showAbout()
  signal information(string title,string message)
  signal preferenceSaved(string message)
@@ -124,56 +125,7 @@ Item {
     }
     Item{Layout.fillHeight:true}
    }
-   // DISPLAY: selected monitor, display options, separate color column.
-   RowLayout {
-    visible:page.subpage==="Display";Layout.columnSpan:2;Layout.fillWidth:true;Layout.margins:18
-    Label{text:redlineAppearance.text(("Global Display"), redlineAppearance.revision);font.pixelSize:21;color:redlineAppearance.color("#eee", redlineAppearance.revision);Layout.fillWidth:true}
-    ComboBox{visible:nativeDashboard.displays.length>1;model:nativeDashboard.displays.map(function(s){return s.name});onActivated:page.displayIndex=currentIndex}
-    RedlineButton{text:"Refresh";onClicked:nativeDashboard.refreshDisplays()}
-    RedlineButton{text:"Arrange Displays ↗";enabled:nativeDashboard.desktopSettingsAvailable();onClicked:nativeDashboard.openDesktopSettings("display")}
-    RedlineButton{text:"Desktop Color ↗";enabled:nativeDashboard.desktopSettingsAvailable();onClicked:nativeDashboard.openDesktopSettings("color")}
-   }
-   Label {visible:page.subpage==="Display";Layout.columnSpan:2;Layout.fillWidth:true;Layout.leftMargin:18;Layout.rightMargin:18;text:redlineAppearance.text(((page.screen.manufacturer || "")+" "+(page.screen.model || page.screen.name || "No display detected")+"  ·  "+(page.screen.resolution || "")+"  ·  "+(page.screen.refreshRate || "")), redlineAppearance.revision);color:redlineAppearance.color("#999", redlineAppearance.revision);font.pixelSize:12}
-   ColumnLayout {
-    visible:page.subpage==="Display";Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:(settingsScroll.availableWidth-98)/2;Layout.alignment:Qt.AlignTop;Layout.margins:18;spacing:12
-    RedlineSettingsGroup {
-     heading:"Display Options"
-     RedlineSettingRow{title:redlineAppearance.text(("Adaptive Sync"), redlineAppearance.revision);description:"Variable refresh rate";kind:"switch";supported:false;reason:"No verified compositor capability is connected for this display."}
-     RedlineSettingRow{title:redlineAppearance.text(("Virtual Super Resolution"), redlineAppearance.revision);kind:"switch";supported:false;description:"Per-game supersampling needs a separate Linux implementation.";reason:"Desktop-wide VSR control is not connected in Redline."}
-     RedlineSettingRow{title:redlineAppearance.text(("GPU Scaling"), redlineAppearance.revision);kind:"switch";supported:false;reason:"GPU scaling is not exposed through the current Redline display backend."}
-     RedlineSettingRow{title:redlineAppearance.text(("Scaling Mode"), redlineAppearance.revision);kind:"choice";choices:["Not available"];supported:false;reason:"Use Ubuntu display settings for desktop scaling."}
-     RedlineSettingRow{title:redlineAppearance.text(("Integer Scaling"), redlineAppearance.revision);currentValue:"Not available";supported:false;reason:"No integer-scaling capability is connected."}
-     RedlineSettingRow{title:redlineAppearance.text(("Color Depth"), redlineAppearance.revision);currentValue:page.screen.depth;description:"Reported Qt surface depth; not the monitor link bit depth"}
-     RedlineSettingRow{title:redlineAppearance.text(("Pixel Format"), redlineAppearance.revision);currentValue:"Not reported";reason:"Pixel format is not reported by the current display model."}
-     RedlineSettingRow{title:redlineAppearance.text(("Display Color Enhancement"), redlineAppearance.revision);kind:"choice";choices:["Not available"];supported:false;reason:"Color enhancement backend is not connected."}
-    }
-    RedlineSettingsGroup {
-     heading:"Connected Display Details";collapsible:true;expanded:page.expandAll
-     RedlineSettingRow{title:redlineAppearance.text(("Connector / screen"), redlineAppearance.revision);currentValue:page.screen.name}
-     RedlineSettingRow{title:redlineAppearance.text(("Desktop size"), redlineAppearance.revision);currentValue:page.screen.resolution;description:"Logical size reported by Qt"}
-     RedlineSettingRow{title:redlineAppearance.text(("Refresh rate"), redlineAppearance.revision);currentValue:page.screen.refreshRate}
-     RedlineSettingRow{title:redlineAppearance.text(("Qt scale factor"), redlineAppearance.revision);currentValue:page.screen.scale}
-     RedlineSettingRow{title:redlineAppearance.text(("Physical size"), redlineAppearance.revision);currentValue:page.screen.physicalSize}
-    }
-    Item{Layout.fillHeight:true}
-   }
-   ColumnLayout {
-    visible:page.subpage==="Display";Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:(settingsScroll.availableWidth-98)/2;Layout.alignment:Qt.AlignTop;Layout.margins:18;spacing:12
-    RedlineSettingsGroup {
-     heading:"Custom Color"
-     RedlineSettingRow{title:redlineAppearance.text(("Custom Color"), redlineAppearance.revision);description:"Modify display color reproduction";kind:"switch";supported:false;reason:"No color adjustment backend is connected."}
-     RedlineSettingRow{title:redlineAppearance.text(("Color Deficiency Correction"), redlineAppearance.revision);kind:"switch";supported:false;reason:"No accessibility color-filter backend is connected."}
-     RedlineSettingsGroup{heading:"Custom Resolutions";collapsible:true;expanded:page.expandAll;RedlineSettingRow{title:redlineAppearance.text(("Custom display modes"), redlineAppearance.revision);currentValue:"Not available";description:"Use the operating system's supported display modes"}}
-     RedlineSettingsGroup{heading:"Overrides";collapsible:true;expanded:page.expandAll;RedlineSettingRow{title:redlineAppearance.text(("Driver overrides"), redlineAppearance.revision);currentValue:"Not available";description:"Redline does not modify display driver configuration"}}
-    }
-    RedlineSettingsGroup {
-     heading:"Display Tools"
-     RedlineSettingRow{title:redlineAppearance.text(("Ubuntu Display Settings"), redlineAppearance.revision);description:"Arrange monitors, resolution and desktop scaling";kind:"action";actionText:"Open ↗";supported:nativeDashboard.desktopSettingsAvailable();onRequested:nativeDashboard.openDesktopSettings("display")}
-     RedlineSettingRow{title:redlineAppearance.text(("Color Management"), redlineAppearance.revision);description:"Manage color profiles in Ubuntu Settings";kind:"action";actionText:"Open ↗";supported:nativeDashboard.desktopSettingsAvailable();onRequested:nativeDashboard.openDesktopSettings("color")}
-     RedlineSettingRow{title:redlineAppearance.text(("Privacy View"), redlineAppearance.revision);currentValue:"Not available";reason:"No privacy-view service is connected."}
-    }
-    Item{Layout.fillHeight:true}
-   }
+   RedlineDisplay {onOpenGames:page.openGames();visible:page.subpage==="Display";Layout.columnSpan:2;Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:settingsScroll.availableWidth-36;Layout.maximumWidth:settingsScroll.availableWidth-36;Layout.margins:18}
    // PREFERENCES: supported choices write the real application settings.
    ColumnLayout {
     visible:page.subpage==="Preferences";Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:(settingsScroll.availableWidth-98)/2;Layout.alignment:Qt.AlignTop;Layout.margins:18;spacing:12

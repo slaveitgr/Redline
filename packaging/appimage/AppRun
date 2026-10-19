@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+appdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+export LD_LIBRARY_PATH="$appdir/usr/lib:$appdir/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export QT_PLUGIN_PATH="$appdir/usr/plugins:$appdir/usr/lib/x86_64-linux-gnu/qt6/plugins"
+export QML2_IMPORT_PATH="$appdir/usr/qml:$appdir/usr/lib/x86_64-linux-gnu/qt6/qml"
+# The portable preview never installs privileged services on the host.
+export REDLINE_READ_ONLY=1
+export REDLINE_GPU_ENGINE=1
+exec "$appdir/usr/bin/redline-native" "$@"

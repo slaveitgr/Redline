@@ -6,6 +6,8 @@
 #include "localassistant.h"
 #include "systemintegration.h"
 #include "vrinstaller.h"
+#include "capturebackend.h"
+#include "displaybackend.h"
 #include "settingssnapshots.h"
 #include "appearance.h"
 #include "gpubackend.h"
@@ -205,6 +207,8 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
   auto integration = new SystemIntegration(&qmlEngine);
   auto installer = new VrInstaller(&qmlEngine);
   QObject::connect(installer, &VrInstaller::installed, integration, &SystemIntegration::refresh);
+  qmlEngine.rootContext()->setContextProperty("captureBackend", new CaptureBackend(&qmlEngine));
+  qmlEngine.rootContext()->setContextProperty("displayBackend", new DisplayBackend(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("vrInstaller", installer);
   qmlEngine.rootContext()->setContextProperty("systemIntegration", integration);
   qmlEngine.rootContext()->setContextProperty("localAssistant", new LocalAssistant(&qmlEngine));

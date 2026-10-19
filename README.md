@@ -33,10 +33,12 @@ Actual Redline interface from the development build.
 | **Gaming tools** | GameMode, Gamescope and MangoHud detection, plus per-game Steam launch integration and overlay configuration. |
 | **Local AI** | Ollama model discovery and session chat, with an optional hardware snapshot attached by the user. Requires a running local Ollama service and model. |
 | **VR setup** | ALVR launcher installation and launch; WiVRn installation through an existing Flathub setup. Headset pairing and streaming are handled by the selected backend. |
+| **Display** | GNOME resolution/refresh, desktop scaling, advertised Adaptive Sync and color modes, with the desktop’s confirmation/revert dialog. |
+| **Recording** | Experimental portal-selected local VP8/WebM recording and saved-media listing; interactive capture validation is pending. |
 | **System** | Hardware and driver information, driver compatibility catalog, settings export/import and scoped reset. |
 | **Appearance** | Dark/light appearance, Greek/English core interface and Redline tray branding. |
 
-Recording and streaming, advanced display controls and additional feature parity are under development. See the [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
+Live streaming, advanced color adjustments and additional feature parity are under development. See the [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
 
 ### Build and try
 
@@ -54,7 +56,7 @@ cd Redline
 
 `run-preview.sh` lets you review the interface without applying hardware changes. The GPU engine uses the pinned Rust toolchain and native dependencies described in [its build notes](3rdparty/redline-gpu/README-REDLINE.md). Hardware control through `run-native.sh` requires the development helper setup. Run the graphical application as your regular user.
 
-Debian packaging is being validated for the development target. Release artifacts and installation instructions will be announced here when ready; source availability should not be mistaken for a stable binary release.
+**Development builds:** native `.deb` packaging and an AppImage Preview builder are included. The [build workflow](https://github.com/slaveitgr/Redline/actions/workflows/build-packages.yml) targets Ubuntu 26.10 and Debian 13 separately. The AppImage is a preview without privileged hardware services. See [formats, compatibility and installation](docs/PACKAGING.md); these are development builds.
 
 ### Designed for real Linux systems
 
@@ -96,13 +98,14 @@ AMD Software: Adrenalin Edition is the interface reference. Redline is an indepe
 - **Τοπικό AI:** σύνδεση με το Ollama για επιλογή μοντέλου και συνομιλία. Προαιρετική προσθήκη μετρήσεων υλικού στο μήνυμα.
 - **Προετοιμασία VR:** εγκατάσταση και άνοιγμα του ALVR launcher, καθώς και εγκατάσταση WiVRn μέσω υπάρχοντος Flathub. Ο χρήστης επιλέγει το backend που ταιριάζει στο headset του.
 - **Εξατομίκευση:** σκοτεινή/φωτεινή εμφάνιση, ελληνικά/αγγλικά στον βασικό κορμό του περιβάλλοντος και εικονίδιο Redline στο tray.
+- **Οθόνη GNOME:** ανάλυση/ρυθμός ανανέωσης, κλίμακα desktop, Adaptive Sync και λειτουργίες χρώματος όπου εκτίθενται από το σύστημα, με επιβεβαίωση και αυτόματη επαναφορά από το GNOME.
 - **Ρυθμίσεις και πληροφορίες:** στοιχεία συστήματος, πληροφορίες συμβατότητας οδηγών και εξαγωγή/εισαγωγή προτιμήσεων.
 
 ### Κατάσταση ανάπτυξης
 
 Το Redline βρίσκεται σε **έκδοση ανάπτυξης**. Οι λειτουργίες recording/streaming, οι προηγμένες ρυθμίσεις οθόνης και η περαιτέρω αντιστοίχιση λειτουργιών εξελίσσονται. Η διαθεσιμότητα εξαρτάται από την κάρτα γραφικών, τον οδηγό, το γραφικό περιβάλλον και τα εγκατεστημένα εργαλεία. Δεν έχει ακόμη ολοκληρωθεί δοκιμή VR με πραγματικό headset.
 
-Ο τρέχων στόχος ανάπτυξης είναι **Ubuntu 26.10 amd64 / Qt 6.11.2**. Για δοκιμή από τον πηγαίο κώδικα, ακολούθησε τις παραπάνω οδηγίες και ξεκίνησε με το `run-preview.sh`, το οποίο δεν εφαρμόζει αλλαγές στο υλικό. Τα πακέτα Debian βρίσκονται σε διαδικασία ελέγχου.
+Ο τρέχων στόχος ανάπτυξης είναι **Ubuntu 26.10 amd64 / Qt 6.11.2**. Για δοκιμή από τον πηγαίο κώδικα, ακολούθησε τις παραπάνω οδηγίες και ξεκίνησε με το `run-preview.sh`, το οποίο δεν εφαρμόζει αλλαγές στο υλικό. Προστέθηκαν εργαλεία δημιουργίας `.deb` και AppImage Preview, καθώς και αυτοματοποιημένα builds για Ubuntu 26.10 και Debian 13. Δες τις [οδηγίες πακέτων και συμβατότητας](docs/PACKAGING.md).
 
 Δες τον [αναλυτικό χάρτη λειτουργιών](docs/PARITY-ROADMAP.md). Για προβλήματα ή προτάσεις, χρησιμοποίησε τα [GitHub Issues](https://github.com/slaveitgr/Redline/issues), αναφέροντας διανομή, GPU, kernel και βήματα αναπαραγωγής.
 
