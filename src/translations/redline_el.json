@@ -313,5 +313,10 @@
   "No notifications.": "Δεν υπάρχουν ειδοποιήσεις.",
   "Events from this Redline session": "Συμβάντα αυτής της συνεδρίας Redline",
   "GPU backend": "Υπηρεσία GPU",
-  "Hardware changes are disabled in this development preview.": "Οι αλλαγές υλικού είναι απενεργοποιημένες σε αυτήν τη δοκιμαστική προεπισκόπηση."
+  "Hardware changes are disabled in this development preview.": "Οι αλλαγές υλικού είναι απενεργοποιημένες σε αυτήν τη δοκιμαστική προεπισκόπηση.",
+  "Show graph": "Εμφάνιση γραφήματος",
+  "Graphing duration": "Διάρκεια γραφημάτων",
+  "Seconds shown in live graphs": "Δευτερόλεπτα ιστορικού στα γραφήματα",
+  "Applying GPU changes…": "Εφαρμογή αλλαγών GPU…",
+  "Unapplied changes": "Μη εφαρμοσμένες αλλαγές"
 }

@@ -23,16 +23,16 @@ Item {
      ColumnLayout {
       visible:performance.shown("fps");Layout.fillWidth:true;spacing:1
       Rectangle {Layout.fillWidth:true;height:32;color:performance.shade("#29292c");Label{anchors.fill:parent;anchors.leftMargin:12;verticalAlignment:Text.AlignVCenter;text:"FPS";color:performance.shade("#ddd");font.pixelSize:11}}
-      Repeater {model:["Framerate","Frame Time","99% FPS"];RedlineMetric{required property string modelData;Layout.fillWidth:true;title:modelData;metricKey:"fps"}}
+      Repeater {model:[{label:"Framerate",key:"fps"},{label:"Frame Time",key:"frameTime"},{label:"99% FPS",key:"fps99"}];RedlineMetric{store:performance.store;required property var modelData;Layout.fillWidth:true;title:modelData.label;metricKey:modelData.key}}
       Label {text:performance.tr("No game telemetry connected");font.pixelSize:10;color:performance.shade("#888");Layout.margins:8}
      }
      ColumnLayout {
       visible:performance.shown("gpu");Layout.fillWidth:true;spacing:1
       Rectangle {Layout.fillWidth:true;height:32;color:performance.shade("#29292c");Label{anchors.fill:parent;anchors.leftMargin:12;verticalAlignment:Text.AlignVCenter;text:"GPU · "+(nativeDashboard.systemInfo.driver || "AMD");color:performance.shade("#ddd");font.pixelSize:11}}
-      RedlineMetric {Layout.fillWidth:true;title:"Utilization";metricKey:"gpu"}
-      RedlineMetric {Layout.fillWidth:true;title:"GPU sensor power";metricKey:"power";scaleMaximum:100}
-      RedlineMetric {Layout.fillWidth:true;title:"GPU temperature";metricKey:"temperature";scaleMaximum:110}
-      RedlineMetric {Layout.fillWidth:true;title:"Clock speed";metricKey:"clock";scaleMaximum:3000}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"Utilization";metricKey:"gpu"}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"GPU sensor power";metricKey:"power";scaleMaximum:100}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"GPU temperature";metricKey:"temperature";scaleMaximum:110}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"Clock speed";metricKey:"clock";scaleMaximum:3000}
      }
     }
     ColumnLayout {
@@ -40,20 +40,20 @@ Item {
      ColumnLayout {
       visible:performance.shown("cpu");Layout.fillWidth:true;spacing:1
       Rectangle {Layout.fillWidth:true;height:32;color:performance.shade("#29292c");Label{anchors.fill:parent;anchors.leftMargin:12;anchors.rightMargin:8;verticalAlignment:Text.AlignVCenter;text:"CPU · "+nativeDashboard.systemInfo.cpuName;elide:Text.ElideRight;color:performance.shade("#ddd");font.pixelSize:11}}
-      RedlineMetric {Layout.fillWidth:true;title:"Utilization";metricKey:"cpu";traceColor:"#e87921"}
-      RedlineMetric {Layout.fillWidth:true;title:"CPU temperature";metricKey:"cpuTemperature";scaleMaximum:110;traceColor:"#e87921"}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"Utilization";metricKey:"cpu";traceColor:"#e87921"}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"CPU temperature";metricKey:"cpuTemperature";scaleMaximum:110;traceColor:"#e87921"}
      }
      ColumnLayout {
       visible:performance.shown("memory");Layout.fillWidth:true;spacing:1
       Rectangle {Layout.fillWidth:true;height:32;color:performance.shade("#29292c");Label{anchors.fill:parent;anchors.leftMargin:12;verticalAlignment:Text.AlignVCenter;text:performance.tr("SYSTEM MEMORY");color:performance.shade("#ddd");font.pixelSize:11}}
-      RedlineMetric {Layout.fillWidth:true;title:"RAM used / total";metricKey:"memory";scaleMaximum:parseFloat(nativeDashboard.systemInfo.memoryTotal)||32;traceColor:"#e87921"}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"RAM used / total";metricKey:"memory";scaleMaximum:parseFloat(nativeDashboard.systemInfo.memoryTotal)||32;traceColor:"#e87921"}
      }
      ColumnLayout {
       visible:performance.shown("gpu");Layout.fillWidth:true;spacing:1
       Rectangle {Layout.fillWidth:true;height:32;color:performance.shade("#29292c");Label{anchors.fill:parent;anchors.leftMargin:12;verticalAlignment:Text.AlignVCenter;text:performance.tr("GPU Memory & Cooling");color:performance.shade("#ddd");font.pixelSize:11}}
-      RedlineMetric {Layout.fillWidth:true;title:"VRAM used";metricKey:"vramUsed";scaleMaximum:parseFloat(nativeDashboard.metrics.vramTotal)||4096}
-      RedlineMetric {Layout.fillWidth:true;title:"Memory clock";metricKey:"memoryClock";scaleMaximum:3000}
-      RedlineMetric {Layout.fillWidth:true;title:"Fan speed";metricKey:"fan";scaleMaximum:6000}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"VRAM used";metricKey:"vramUsed";scaleMaximum:parseFloat(nativeDashboard.metrics.vramTotal)||4096}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"Memory clock";metricKey:"memoryClock";scaleMaximum:3000}
+      RedlineMetric {store:performance.store;Layout.fillWidth:true;title:"Fan speed";metricKey:"fan";scaleMaximum:6000}
      }
      Label {visible:!performance.shown("cpu") && !performance.shown("memory");text:performance.tr("Select metrics in Tracking");color:performance.shade("#999")}
     }
@@ -77,6 +77,7 @@ Item {
        Label {text:performance.tr(performance.logError?"Could not create log file.":nativeDashboard.logging?"Recording hardware metrics to CSV":"Hardware metrics · CSV export");color:performance.shade("#999");font.pixelSize:11;wrapMode:Text.WordWrap;Layout.fillWidth:true}
        RedlineButton {text:"Open logs folder";visible:nativeDashboard.loggingPath.length>0;Layout.fillWidth:true;onClicked:nativeDashboard.openLogs()}
        RedlineSettingRow {title:"Sampling interval";kind:"choice";choices:["0.25","0.5","1","2","5"];description:"Seconds between hardware measurements";currentValue:{var r=store.revision;return String(store.read("perf.interval",1))} onRequested:value=>store.write("perf.interval",Number(value))}
+       RedlineSettingRow {title:"Graphing duration";kind:"choice";choices:["10","30","60","120"];description:"Seconds shown in live graphs";currentValue:{var r=store.revision;return String(store.read("perf.duration",60))} onRequested:value=>store.write("perf.duration",Number(value))}
        Label {text:nativeDashboard.historyDurationSeconds+" s · "+nativeDashboard.history.length+" samples";color:performance.shade("#999");font.pixelSize:11}
        Label {text:performance.tr("Visible metrics");color:performance.shade("#ddd");font.pixelSize:13}
        Repeater {

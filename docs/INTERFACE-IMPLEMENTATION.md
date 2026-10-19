@@ -31,3 +31,7 @@ Static analysis of the supplied Windows package recovered 548 QML files plus one
 Qt metadata for 312 classes exposed 1,753 properties and 2,724 methods/signals. Class/property names, readable/writable/constant flags, method names/kinds/access and enum counts were independently checked with Linux Qt using data-only buffers and harmless local type interfaces. Target getters, functions and Windows code were not called. All 49 decoded Qt enum tables also matched separate PDB type records.
 
 These facts provide interface contracts, support gates and state transitions to implement against Linux backends. Native procedure indexing and selected call traces are partial static analysis; indirect calls, driver behavior and complete runtime equivalence still require further investigation and testing.
+
+## Metrics controls and staged tuning follow-up
+
+Metrics now use sensor gauges, individually persisted graph visibility, and a real 10/30/60/120-second graph window. Frame time and 99% FPS have separate unavailable keys until a real frame telemetry source is connected. Tuning retains staged edits on backend errors and locks edits, adapter changes and repeated Apply during submission and rollback confirmation. The preview smoke suite passes; hardware writes were not exercised in this UI pass.

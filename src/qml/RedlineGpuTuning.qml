@@ -6,6 +6,8 @@ ColumnLayout {
  id:panel
  property var patch:({})
  property string editedDevice:""
+ property bool submitting:false
+ property bool dirty:Object.keys(patch).length>0
  property var power:redlineGpu.stats.power || ({})
  property var fan:redlineGpu.stats.fan || ({})
  property bool canPower:power.cap_min!==undefined && power.cap_max!==undefined
@@ -14,12 +16,12 @@ ColumnLayout {
  spacing:8
  function tr(s){return redlineAppearance.text(s,redlineAppearance.revision)}
  function shade(s){return redlineAppearance.color(s,redlineAppearance.revision)}
- function edit(key,value){var next=Object.assign({},patch);next[key]=value;patch=next}
+ function edit(key,value){if(submitting || redlineGpu.pendingSeconds)return;var next=Object.assign({},patch);next[key]=value;patch=next}
  Rectangle {
   Layout.fillWidth:true;Layout.preferredHeight:44;color:panel.shade("#18181b")
   RowLayout {anchors.fill:parent;anchors.margins:10
    Label {text:"GPU · Redline Engine";font.bold:true;color:panel.shade("#eee")}
-   ComboBox {Layout.fillWidth:true;model:redlineGpu.devices;textRole:"name";onActivated:redlineGpu.selectDevice(redlineGpu.devices[currentIndex].id)}
+   ComboBox {Layout.fillWidth:true;enabled:!panel.dirty && !panel.submitting && !redlineGpu.pendingSeconds;model:redlineGpu.devices;textRole:"name";onActivated:redlineGpu.selectDevice(redlineGpu.devices[currentIndex].id)}
    Label {text:panel.tr(redlineGpu.writable?"Hardware control":redlineGpu.ready?"Read-only preview":"Connecting…");color:panel.shade("#aaa")}
   }
  }
@@ -38,7 +40,7 @@ ColumnLayout {
  }
  RedlineSettingRow {
   title:"Performance mode";kind:"choice";choices:["auto","low","high"];currentValue:panel.patch.performance_level || redlineGpu.config.performance_level || redlineGpu.stats.performance_level || "auto"
-  supported:redlineGpu.writable && redlineGpu.stats.performance_level!==undefined && !redlineGpu.pendingSeconds
+  supported:redlineGpu.writable && redlineGpu.stats.performance_level!==undefined && !redlineGpu.pendingSeconds && !panel.submitting
   onRequested:value=>panel.edit("performance_level",value)
  }
  Rectangle {
@@ -46,7 +48,7 @@ ColumnLayout {
   RowLayout {anchors.fill:parent;anchors.margins:12
    Label {text:panel.tr("Power limit (W)");color:panel.shade("#ddd");Layout.fillWidth:true}
    Label {visible:!panel.canPower;text:panel.tr("Not exposed by this GPU");color:panel.shade("#999")}
-   SpinBox {visible:panel.canPower;enabled:redlineGpu.writable;from:Math.ceil(panel.power.cap_min || 0);to:Math.floor(panel.power.cap_max || 0);value:Math.round(panel.patch.power_cap || redlineGpu.config.power_cap || panel.power.cap_current || 0);onValueModified:panel.edit("power_cap",value)}
+   SpinBox {visible:panel.canPower;enabled:redlineGpu.writable && !panel.submitting && !redlineGpu.pendingSeconds;from:Math.ceil(panel.power.cap_min || 0);to:Math.floor(panel.power.cap_max || 0);value:Math.round(panel.patch.power_cap || redlineGpu.config.power_cap || panel.power.cap_current || 0);onValueModified:panel.edit("power_cap",value)}
   }
  }
  Rectangle {
@@ -54,21 +56,21 @@ ColumnLayout {
   RowLayout {anchors.fill:parent;anchors.margins:12
    Label {text:panel.tr("Fan control");color:panel.shade("#ddd");Layout.fillWidth:true}
    Label {visible:!panel.canFan;text:panel.tr("Not exposed by this GPU");color:panel.shade("#999")}
-   ComboBox {visible:panel.canFan;enabled:redlineGpu.writable;model:["Automatic","Fixed 70%","Default curve"];onActivated:{if(currentIndex===0){panel.edit("fan_control_enabled",false)}else{panel.edit("fan_control_enabled",true);panel.edit("fan_control_settings",{mode:currentIndex===1?"static":"curve",static_speed:0.7,temperature_key:"edge",interval_ms:500,curve:{"40":0.3,"50":0.4,"60":0.55,"70":0.75,"80":1.0},spindown_delay_ms:1000,change_threshold:2})}}}
+   ComboBox {visible:panel.canFan;enabled:redlineGpu.writable && !panel.submitting && !redlineGpu.pendingSeconds;model:["Automatic","Fixed 70%","Default curve"];onActivated:{if(currentIndex===0){panel.edit("fan_control_enabled",false)}else{panel.edit("fan_control_enabled",true);panel.edit("fan_control_settings",{mode:currentIndex===1?"static":"curve",static_speed:0.7,temperature_key:"edge",interval_ms:500,curve:{"40":0.3,"50":0.4,"60":0.55,"70":0.75,"80":1.0},spindown_delay_ms:1000,change_threshold:2})}}}
   }
  }
  RedlineSettingRow {title:"Clocks / Voltage";currentValue:redlineGpu.clocks.table?"Clocks table detected":"Not exposed by this GPU";description:"Only driver-exposed controls can be applied."}
  RedlineSettingRow {title:"Throttling";currentValue:Object.keys(redlineGpu.stats.throttle_info || {}).map(function(k){return (redlineGpu.stats.throttle_info[k] || []).join(", ")}).join(" · ") || "None reported"}
  RowLayout {
   Layout.fillWidth:true
-  Label {text:panel.tr("GPU controls and live sensors");color:panel.shade("#888");font.pixelSize:11;Layout.fillWidth:true}
-  RedlineButton {text:"Discard";enabled:Object.keys(panel.patch).length>0;onClicked:{panel.patch=({});redlineGpu.refresh()}}
-  RedlineButton {text:"Apply GPU changes";accent:true;enabled:redlineGpu.writable && !redlineGpu.pendingSeconds && Object.keys(panel.patch).length>0;onClicked:{redlineGpu.apply(panel.patch);panel.patch=({})}}
+  Label {text:panel.tr(panel.submitting?"Applying GPU changes…":panel.dirty?"Unapplied changes":"GPU controls and live sensors");color:panel.shade("#888");font.pixelSize:11;Layout.fillWidth:true}
+  RedlineButton {text:"Discard";enabled:panel.dirty && !panel.submitting && !redlineGpu.pendingSeconds;onClicked:{panel.patch=({});redlineGpu.refresh()}}
+  RedlineButton {text:"Apply GPU changes";accent:true;enabled:redlineGpu.writable && !redlineGpu.pendingSeconds && !panel.submitting && panel.dirty;onClicked:{panel.submitting=true;redlineGpu.apply(panel.patch)}}
  }
  Dialog {
   id:confirmation;parent:Overlay.overlay;anchors.centerIn:parent;modal:true;width:460;closePolicy:Popup.NoAutoClose;title:panel.tr("Confirm GPU settings")
   Label {width:parent.width;wrapMode:Text.WordWrap;text:panel.tr("Keep these settings? Automatic rollback in")+" "+redlineGpu.pendingSeconds+" s";color:panel.shade("#ddd")}
   footer:RowLayout {RedlineButton{text:"Revert";onClicked:redlineGpu.confirm(false)}RedlineButton{text:"Keep settings";accent:true;onClicked:redlineGpu.confirm(true)}}
  }
- Connections {target:redlineGpu;function onChanged(){if(panel.editedDevice!==redlineGpu.deviceId){panel.patch=({});panel.editedDevice=redlineGpu.deviceId}if(redlineGpu.pendingSeconds>0 && !confirmation.opened)confirmation.open();if(!redlineGpu.pendingSeconds)confirmation.close()}}
+ Connections {target:redlineGpu;function onChanged(){if(panel.submitting && redlineGpu.error.length>0)panel.submitting=false;if(redlineGpu.pendingSeconds>0){panel.submitting=false;panel.patch=({})}if(panel.editedDevice!==redlineGpu.deviceId){panel.patch=({});panel.editedDevice=redlineGpu.deviceId}if(redlineGpu.pendingSeconds>0 && !confirmation.opened)confirmation.open();if(!redlineGpu.pendingSeconds)confirmation.close()}}
 }
