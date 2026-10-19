@@ -31,15 +31,24 @@ class Response(io.BytesIO):
 
 class InstallerTests(unittest.TestCase):
     def test_atomic_official_release_install(self):
-        body = archive()
+        body = archive('alvr_launcher_linux/ALVR Launcher')
         digest = hashlib.sha256(body).hexdigest()
         release = {'tag_name': 'test', 'assets': [{'name': 'alvr_launcher_linux.tar.gz', 'digest': 'sha256:' + digest, 'size': len(body), 'browser_download_url': 'https://github.com/alvr-org/ALVR/releases/download/test/alvr_launcher_linux.tar.gz'}]}
         with tempfile.TemporaryDirectory() as folder, patch.object(vr.urllib.request, 'urlopen', side_effect=[Response(json.dumps(release).encode()), Response(body)]), patch.object(vr, 'notify'):
             vr.install(folder)
             root = Path(folder) / 'alvr'
-            self.assertTrue((root / 'alvr_launcher').is_file())
+            self.assertTrue((root / 'alvr_launcher_linux/ALVR Launcher').is_file())
             self.assertEqual(json.loads((root / 'redline-install.json').read_text())['sha256'], digest)
             self.assertEqual(list(Path(folder).glob('.alvr-install-*')), [])
+
+    def test_legacy_name_and_ambiguity(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / 'alvr_launcher').write_text('fixture')
+            self.assertEqual(vr.find_launcher(root).name, 'alvr_launcher')
+            (root / 'ALVR Launcher').write_text('fixture')
+            with self.assertRaises(ValueError):
+                vr.find_launcher(root)
 
     def test_corrupt_download_never_published(self):
         body = archive()

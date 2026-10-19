@@ -30,6 +30,13 @@ def unpack(archive, destination):
                 raise ValueError('Archive is too large')
         source.extractall(destination, members=members, filter='data')
 
+def find_launcher(contents):
+    names = {'alvr_launcher', 'ALVR Launcher'}
+    launchers = [p for p in Path(contents).rglob('*') if p.name in names and p.is_file() and not p.is_symlink()]
+    if len(launchers) != 1:
+        raise ValueError('The ALVR launcher could not be identified in the archive.')
+    return launchers[0]
+
 def install(root):
     if os.uname().machine != 'x86_64':
         raise ValueError('The automatic ALVR launcher installer currently supports x86_64 only.')
@@ -80,10 +87,7 @@ def install(root):
         contents = staging / 'contents'
         contents.mkdir()
         unpack(archive, contents)
-        launchers = [p for p in contents.rglob('alvr_launcher') if p.is_file() and not p.is_symlink()]
-        if len(launchers) != 1:
-            raise ValueError('The ALVR launcher could not be identified in the archive.')
-        launcher = launchers[0]
+        launcher = find_launcher(contents)
         launcher.chmod(launcher.stat().st_mode | 0o100)
         (contents / 'redline-install.json').write_text(json.dumps({'launcher': str(launcher.relative_to(contents)), 'version': release.get('tag_name', ''), 'sha256': hashed.hexdigest()}))
         contents.rename(destination)
