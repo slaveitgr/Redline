@@ -8,6 +8,11 @@ from pathlib import Path
 import signal
 import sys
 import uuid
+import tempfile
+import shutil
+import subprocess
+import threading
+from collections import deque
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gio, GLib, Gst
@@ -40,7 +45,7 @@ def available_codecs():
 
 
 def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=False, serial=None,
-                  codec='vp8', bitrate=8, resolution='native', microphone=False):
+                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False):
     if codec not in CODECS or resolution not in RESOLUTIONS or fps not in (30, 60) or not 2 <= bitrate <= 100:
         raise ValueError('Unsupported recording configuration.')
     profile = CODECS[codec]
@@ -85,12 +90,24 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
     video = [source, convert, scale, rate, caps, encoder]
     if codec == 'h264':
         video.append(element('h264parse'))
-    queue, mux, sink = element('queue'), element(profile['mux'], 'mux'), element('filesink')
-    if codec == 'h264':
-        mux.set_property('faststart', True)
-    sink.set_property('location', str(output))
-    sink.set_property('sync', False)
-    link(video + [queue, mux, sink])
+    if replay:
+        if codec != 'vp8':
+            raise ValueError('Replay requires VP8 / WebM.')
+        encoder.set_property('keyframe-max-dist', fps * 2)
+        mux = element('splitmuxsink', 'replay-sink')
+        mux.set_property('location', str(output))
+        mux.set_property('max-size-time', 2 * Gst.SECOND)
+        mux.set_property('max-size-bytes', 16 * 1024 * 1024)
+        mux.set_property('muxer-factory', 'webmmux')
+        mux.set_property('async-finalize', True)
+        link(video + [element('queue'), mux])
+    else:
+        queue, mux, sink = element('queue'), element(profile['mux'], 'mux'), element('filesink')
+        if codec == 'h264':
+            mux.set_property('faststart', True)
+        sink.set_property('location', str(output))
+        sink.set_property('sync', False)
+        link(video + [queue, mux, sink])
     inputs = ([True] if audio else []) + ([False] if microphone else [])
     if inputs:
         mixer = element('audiomixer', 'audio-mixer')
@@ -109,7 +126,14 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
         audio_encoder = element(profile['audio'])
         if codec == 'h264':
             audio_encoder.set_property('bitrate', 128000)
-        link([mixer, element('audioconvert'), audio_encoder, element('queue'), mux])
+        audio_chain = [mixer, element('audioconvert'), audio_encoder, element('queue')]
+        link(audio_chain)
+        if replay:
+            pad = mux.request_pad_simple('audio_%u')
+            if audio_chain[-1].get_static_pad('src').link(pad) != Gst.PadLinkReturn.OK:
+                raise RuntimeError('Could not connect replay audio.')
+        else:
+            link([audio_chain[-1], mux])
     return pipeline
 
 class Recorder:
@@ -123,12 +147,19 @@ class Recorder:
         self.request_path = None
         self.stopping = False
         self.failed = False
+        self.replay_dir = tempfile.TemporaryDirectory(prefix='redline-replay-') if args.replay_seconds else None
+        self.fragments = deque()
+        self.export_thread = None
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, self.stop)
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.stop)
         GLib.io_add_watch(sys.stdin, GLib.IO_IN | GLib.IO_HUP, self.command)
 
     def command(self, stream, condition):
-        if condition & GLib.IO_HUP or stream.readline().strip() == 'stop':
+        command = '' if condition & GLib.IO_HUP else stream.readline().strip()
+        if command == 'save-replay' and self.replay_dir and not self.stopping:
+            self.save_replay()
+            return True
+        if condition & GLib.IO_HUP or command == 'stop':
             self.stop()
             return False
         return True
@@ -174,7 +205,7 @@ class Recorder:
         handle, descriptors = self.connection.call_with_unix_fd_list_sync(BUS, PATH, IFACE, 'OpenPipeWireRemote', GLib.Variant('(oa{sv})', (self.session, {})), GLib.VariantType.new('(h)'), Gio.DBusCallFlags.NONE, 10000, None, None)
         self.fd = descriptors.get(handle.unpack()[0])
         # Prefer portal v6 stream serials; use legacy node IDs on older portals.
-        self.pipeline = make_pipeline(self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone)
+        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir))
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message', self.bus_message)
@@ -182,16 +213,62 @@ class Recorder:
             raise RuntimeError('Could not start the recording pipeline.')
 
     def bus_message(self, bus, message):
+        if message.type == Gst.MessageType.ELEMENT and self.replay_dir:
+            structure = message.get_structure()
+            if structure and structure.get_name() == 'splitmuxsink-fragment-closed':
+                self.fragments.append(Path(structure.get_value('location')))
+                while len(self.fragments) > self.args.replay_seconds // 2:
+                    self.fragments.popleft().unlink(missing_ok=True)
+                event('replay-ready', buffered=len(self.fragments) * 2)
         if message.type == Gst.MessageType.ERROR:
             error, debug = message.parse_error()
+            print(f"GStreamer {message.src.get_name()}: {error.message}; {debug}", file=sys.stderr, flush=True)
             self.error(error.message)
         elif message.type == Gst.MessageType.STATE_CHANGED and message.src == self.pipeline:
             old, new, pending = message.parse_state_changed()
             if new == Gst.State.PLAYING:
                 event('recording', output=self.args.output)
         elif message.type == Gst.MessageType.EOS:
-            event('saved', output=self.args.output)
+            event('buffer-stopped' if self.replay_dir else 'saved', output=self.args.output)
             self.loop.quit()
+
+    def save_replay(self):
+        if self.export_thread and self.export_thread.is_alive():
+            event('replay-notice', message='Replay export is already in progress.')
+            return
+        if not self.fragments:
+            event('replay-notice', message='Wait for at least one completed replay segment.')
+            return
+        snapshot = tempfile.TemporaryDirectory(prefix='redline-replay-export-')
+        files = []
+        try:
+            for index, source in enumerate(self.fragments):
+                target = Path(snapshot.name) / f'{index:06d}.webm'
+                os.link(source, target)
+                files.append(target)
+        except OSError:
+            snapshot.cleanup()
+            event('replay-notice', message='Could not snapshot replay segments.')
+            return
+        target = Path(self.args.output).with_name('Replay-' + uuid.uuid4().hex + '.webm')
+        event('replay-exporting')
+        def export():
+            try:
+                playlist = Path(snapshot.name) / 'segments.txt'
+                playlist.write_text(''.join("file '" + str(f) + "'\n" for f in files))
+                result = subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-f', 'concat', '-safe', '0', '-i', str(playlist), '-c', 'copy', '-t', str(self.args.replay_seconds), '-n', str(target)], capture_output=True, timeout=90)
+                if result.returncode:
+                    target.unlink(missing_ok=True)
+                    event('replay-notice', message='Replay export failed.')
+                else:
+                    event('replay-saved', output=str(target))
+            except Exception:
+                target.unlink(missing_ok=True)
+                event('replay-notice', message='Replay export failed or timed out.')
+            finally:
+                snapshot.cleanup()
+        self.export_thread = threading.Thread(target=export)
+        self.export_thread.start()
 
     def error(self, message):
         if not self.failed:
@@ -236,6 +313,10 @@ class Recorder:
                     self.connection.call_sync(BUS, self.session, 'org.freedesktop.portal.Session', 'Close', None, None, Gio.DBusCallFlags.NONE, 2000, None)
                 except GLib.Error:
                     pass
+            if self.export_thread:
+                self.export_thread.join()
+            if self.replay_dir:
+                self.replay_dir.cleanup()
             if self.fd is not None:
                 os.close(self.fd)
         return 1 if self.failed else 0
@@ -246,19 +327,23 @@ if __name__ == '__main__':
     parser.add_argument('--output')
     parser.add_argument('--fps', type=int, choices=[30, 60], default=30)
     parser.add_argument('--audio', action='store_true')
+    parser.add_argument('--replay-seconds', type=int, choices=[15,30,60,120], default=0)
     parser.add_argument('--microphone', action='store_true')
     parser.add_argument('--codec', choices=list(CODECS), default='vp8')
     parser.add_argument('--bitrate', type=int, choices=range(2,101), default=8)
     parser.add_argument('--resolution', choices=list(RESOLUTIONS), default='native')
     args = parser.parse_args()
+    os.umask(0o077)
     if args.check:
         required = ['pipewiresrc', 'videoconvert', 'videoscale', 'videorate', 'filesink']
         missing = [name for name in required if not Gst.ElementFactory.find(name)]
         codecs = available_codecs()
-        event('capabilities', supported=not missing and bool(codecs), codecs=codecs, missing=missing, audio=all(Gst.ElementFactory.find(n) for n in ['pulsesrc', 'audiomixer', 'audioconvert', 'audioresample', 'volume']))
+        event('capabilities', supported=not missing and bool(codecs), codecs=codecs, missing=missing, replay=bool(shutil.which('ffmpeg') and Gst.ElementFactory.find('splitmuxsink')), audio=all(Gst.ElementFactory.find(n) for n in ['pulsesrc', 'audiomixer', 'audioconvert', 'audioresample', 'volume']))
         raise SystemExit(bool(missing) or not codecs)
     if os.getenv('REDLINE_READ_ONLY') is not None:
         parser.error('Recording is disabled in UI preview.')
     if not args.output or not Path(args.output).is_absolute() or Path(args.output).exists():
         parser.error('A new absolute output path is required.')
+    if args.replay_seconds and (args.codec != 'vp8' or not shutil.which('ffmpeg')):
+        parser.error('Replay requires VP8 and ffmpeg.')
     raise SystemExit(Recorder(args).run())

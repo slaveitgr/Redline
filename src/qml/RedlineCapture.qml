@@ -14,7 +14,9 @@ Item {
  property var codecLabels:captureBackend.codecs.map(function(c){return c.label})
  property var codecIds:captureBackend.codecs.map(function(c){return c.id})
  property int fps:{var r=store.revision;return parseInt(store.read("rec.fps","30 fps"))===60?60:30}
- function toggleRecording(){if(captureBackend.active)captureBackend.stop();else captureBackend.start({systemAudio:page.systemAudio,microphone:page.microphone,fps:page.fps,codec:page.codec,bitrate:page.bitrate,resolution:page.resolution})}
+ property bool replayEnabled:{var r=store.revision;return store.read("rec.replay",false)}
+ property int replaySeconds:{var r=store.revision;return Number(store.read("rec.replaySeconds",30))}
+ function toggleRecording(){if(captureBackend.active)captureBackend.stop();else captureBackend.start({systemAudio:page.systemAudio,microphone:page.microphone,fps:page.fps,codec:page.codec,bitrate:page.bitrate,resolution:page.resolution,replay:page.replayEnabled,replaySeconds:page.replaySeconds})}
  function tr(s){return redlineAppearance.text(s,redlineAppearance.revision)}
  function shade(s){return redlineAppearance.color(s,redlineAppearance.revision)}
  ColumnLayout {
@@ -25,9 +27,11 @@ Item {
    RedlineButton {text:"Take a Screenshot";enabled:!captureBackend.screenshotBusy && !redlineReadOnly;onClicked:captureBackend.takeScreenshot()}
    RedlineButton {text:"Open recordings folder";onClicked:captureBackend.openFolder()}
   }
-  Label {text:page.tr("Local recording through the Linux screen-sharing portal. Streaming, replay and scene editing are not connected yet.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
+  Label {text:page.tr("Local recording through the Linux screen-sharing portal. Replay uses a temporary VP8/WebM buffer. Streaming and scene editing are not connected yet.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
   ColumnLayout {
    visible:page.subpage==="Settings";Layout.fillWidth:true;Layout.fillHeight:true;spacing:12
+   RedlineSettingRow {title:"Instant Replay";kind:"switch";currentValue:page.replayEnabled;supported:captureBackend.replaySupported && !captureBackend.active;description:"Keep a temporary buffer until stopped. Requires ffmpeg. Uses VP8/WebM.";onRequested:value=>page.store.write("rec.replay",value)}
+   RedlineSettingRow {title:"Replay duration (seconds)";kind:"choice";choices:["15","30","60","120"];currentValue:String(page.replaySeconds);supported:!captureBackend.active;onRequested:value=>page.store.write("rec.replaySeconds",Number(value))}
    RedlineSettingRow {title:"Recording FPS";kind:"choice";choices:["30","60"];currentValue:String(page.fps);supported:!captureBackend.active;onRequested:value=>page.store.write("rec.fps",value+" fps")}
    RedlineSettingRow {title:"System audio (experimental)";kind:"switch";currentValue:page.systemAudio;supported:captureBackend.audioSupported && !captureBackend.active;onRequested:value=>page.store.write("rec.systemAudio",value)}
    RedlineSettingRow {title:"Microphone";kind:"switch";currentValue:page.microphone;supported:captureBackend.audioSupported && !captureBackend.active;description:"Record the default microphone. Mixed with system audio when both are enabled.";onRequested:value=>page.store.write("rec.microphone",value)}
@@ -46,7 +50,10 @@ Item {
      RedlineSettingRow {title:"Recording FPS";kind:"choice";choices:["30","60"];currentValue:String(page.fps);supported:!captureBackend.active;onRequested:value=>page.store.write("rec.fps",value+" fps")}
      CheckBox {text:page.tr("System audio (experimental)");checked:page.systemAudio;enabled:captureBackend.audioSupported && !captureBackend.active;onToggled:page.store.write("rec.systemAudio",checked)}
      CheckBox {text:page.tr("Microphone");checked:page.microphone;enabled:captureBackend.audioSupported && !captureBackend.active;onToggled:page.store.write("rec.microphone",checked)}
-     RedlineButton {text:captureBackend.active?"Stop recording":"Start recording";accent:true;Layout.fillWidth:true;enabled:captureBackend.active || captureBackend.supported;onClicked:page.toggleRecording()}
+     CheckBox {text:page.tr("Instant Replay");checked:page.replayEnabled;enabled:captureBackend.replaySupported && !captureBackend.active;onToggled:page.store.write("rec.replay",checked)}
+     RedlineButton {text:"Save Replay";visible:captureBackend.active && captureBackend.replayMode;enabled:captureBackend.state==="recording";Layout.fillWidth:true;onClicked:captureBackend.saveReplay()}
+     Label {visible:page.replayEnabled;text:page.tr("Saves completed segments; the newest ~2 seconds may be omitted. Temporary files are removed when stopped.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
+     RedlineButton {text:captureBackend.active?(captureBackend.replayMode?"Stop Replay":"Stop recording"):(page.replayEnabled?"Start Replay":"Start recording");accent:true;Layout.fillWidth:true;enabled:captureBackend.active || captureBackend.supported;onClicked:page.toggleRecording()}
      Label {visible:redlineReadOnly;text:page.tr("Screen recording is disabled in UI preview. Open normal Redline.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
      Label {text:page.tr(captureBackend.supported?((page.codecLabels[page.codecIds.indexOf(page.codec)] || "Select available encoder")+" · "+page.resolution+" · "+page.bitrate+" Mb/s"):"Capture dependencies are unavailable.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
      Item {Layout.fillHeight:true}

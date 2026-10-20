@@ -345,7 +345,8 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
   RedlineHome {
    onOpenAI:prompt=>{appWindow.navigateTo(1,"Chat","");aiPage.draft(prompt)}
    onOpenGames:appWindow.navigateTo(2,"Games","")
-   onOpenCapture:appWindow.navigateTo(3,"Record","")
+   onOpenReplay:{if(!captureBackend.active)uiStore.write("rec.replay",true);appWindow.navigateTo(3,"Record","")}
+     onOpenCapture:{if(!captureBackend.active)uiStore.write("rec.replay",false);appWindow.navigateTo(3,"Record","")}
    onOpenGraphics:appWindow.navigateTo(2,"Graphics","")
    onShowDetails:(title,message)=>appWindow.showDetails(title,message)
    onOpenSettings:appWindow.navigate(6)
@@ -368,6 +369,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
   RedlineHotkeys {store:uiStore;onOpenOverlay:{appWindow.navigateTo(4,"Metrics","");uiStore.write("perf.metrics.mode","Overlay")}}
  }
 
+ RedlineShortcut {settingsStore:uiStore;action:"replay";defaultSequence:"Ctrl+Shift+S";onActivated:captureBackend.saveReplay()}
  RedlineShortcut {settingsStore:uiStore;action:"record";defaultSequence:"Ctrl+Shift+R";onActivated:{if(!captureBackend.active)appWindow.navigateTo(3,"Record","");capturePage.toggleRecording()}}
  RedlineShortcut {settingsStore:uiStore;action:"logging";defaultSequence:"Ctrl+Shift+L";onActivated:{if(nativeDashboard.logging)nativeDashboard.stopLogging();else nativeDashboard.startLogging()}}
  RedlineShortcut {settingsStore:uiStore;action:"games";defaultSequence:"Alt+G";onActivated:appWindow.navigateTo(2,"Games","")}

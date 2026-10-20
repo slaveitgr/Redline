@@ -6,7 +6,7 @@ ScrollView {
  id:page
  property var store
  property string message:""
- property var actions:[{id:"record",label:"Start / Stop Recording",value:"Ctrl+Shift+R"},{id:"logging",label:"Start / Stop Metrics Logging",value:"Ctrl+Shift+L"},{id:"games",label:"Open Game Library",value:"Alt+G"},{id:"metrics",label:"Open Performance Metrics",value:"Alt+P"}]
+ property var actions:[{id:"replay",label:"Save Instant Replay",value:"Ctrl+Shift+S"},{id:"record",label:"Start / Stop Recording",value:"Ctrl+Shift+R"},{id:"logging",label:"Start / Stop Metrics Logging",value:"Ctrl+Shift+L"},{id:"games",label:"Open Game Library",value:"Alt+G"},{id:"metrics",label:"Open Performance Metrics",value:"Alt+P"}]
  signal openOverlay()
  contentWidth:availableWidth;clip:true
  function save(action,value){

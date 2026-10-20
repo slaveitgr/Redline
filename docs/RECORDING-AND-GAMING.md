@@ -34,3 +34,9 @@ These shortcuts work while a Redline window is active. They are not global Wayla
 - The native preview suite checks global/per-game inheritance and override reset, encoder discovery and new page navigation; captures are of Redline's own window.
 
 References: [ScreenCast](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.ScreenCast.html), [Screenshot](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html), [Qt Shortcut](https://doc.qt.io/qt-6/qml-qtquick-shortcut.html), [GStreamer audiomixer](https://gstreamer.freedesktop.org/documentation/audiomixer/audiomixer.html), [Gamescope](https://github.com/ValveSoftware/gamescope).
+
+## Instant Replay (development)
+
+Opt-in portal capture retains completed two-second VP8/WebM segments in a private temporary directory, pruning old segments to the chosen 15/30/60/120 second limit (15 seconds retains 14 seconds of complete segments). Save Replay or Ctrl+Shift+S while Redline has focus snapshots the completed segments and exports a WebM without stopping capture. The newest roughly two seconds may be omitted. Stop discards the remaining buffer. ffmpeg is required and recommended by the Debian package. Microphone and system audio remain explicit choices. This uses software encoding and disk storage, not an in-memory buffer.
+
+Generated-source tests verify segment retention, audio/video export, full decoding and cleanup. A real desktop replay session is not yet validated.

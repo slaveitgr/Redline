@@ -8,6 +8,7 @@ Item {
  signal openAI(string prompt)
  signal openGames()
  signal openCapture()
+ signal openReplay()
  signal openGame(string id)
  signal openGraphics()
  signal openProfiles()
@@ -65,10 +66,10 @@ Item {
         required property var modelData
         Layout.fillWidth: true; Layout.preferredHeight: home.height < 730 ? 70 : 91; color: redlineAppearance.color("#28282b", redlineAppearance.revision)
         Column { anchors.centerIn: parent; spacing: 10
-         Label { text: redlineAppearance.text((modelData.symbol), redlineAppearance.revision); font.pixelSize: 28; color: modelData.label==="Take a Screenshot" || modelData.label==="Record a Video"?"#ed003b":redlineAppearance.color("#854254",redlineAppearance.revision); anchors.horizontalCenter: parent.horizontalCenter }
+         Label { text: redlineAppearance.text((modelData.symbol), redlineAppearance.revision); font.pixelSize: 28; color: modelData.label!=="Instant GIF"?"#ed003b":redlineAppearance.color("#854254",redlineAppearance.revision); anchors.horizontalCenter: parent.horizontalCenter }
          Small { text: redlineAppearance.text((modelData.label), redlineAppearance.revision); color: redlineAppearance.color("#77777e", redlineAppearance.revision) }
         }
-        MouseArea { enabled:modelData.label==="Take a Screenshot" || modelData.label==="Record a Video";anchors.fill: parent; onClicked:{if(modelData.label==="Take a Screenshot")captureBackend.takeScreenshot();else if(modelData.label==="Record a Video")home.openCapture();else home.showDetails(modelData.label,"Replay and GIF capture are not implemented yet.")}}
+        MouseArea { enabled:modelData.label!=="Instant GIF";anchors.fill: parent; onClicked:{if(modelData.label==="Take a Screenshot")captureBackend.takeScreenshot();else if(modelData.label==="Record a Video")home.openCapture();else if(modelData.label==="Instant Replay")home.openReplay()}}
        }
       }
      }
