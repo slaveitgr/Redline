@@ -65,9 +65,11 @@ def streaming_supported():
 
 
 def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=False, serial=None,
-                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False, stream=None, audio_bitrate=128):
+                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False, stream=None, audio_bitrate=128, archive=False):
     if codec not in CODECS or resolution not in RESOLUTIONS or fps not in (30, 60) or not 2 <= bitrate <= 100:
         raise ValueError('Unsupported recording configuration.')
+    if archive and (not stream or not output):
+        raise ValueError('Archiving requires a stream and an output file.')
     if stream and (codec != 'h264' or replay or audio_bitrate not in (96,128,160,192,256,320)):
         raise ValueError('Unsupported streaming configuration.')
     profile = CODECS[codec]
@@ -118,7 +120,18 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
         mux.set_property('streamable', True)
         sink = element('rtmp2sink', 'stream-sink')
         sink.set_property('location', stream)
-        link(video + [element('queue'), mux, sink])
+        if archive:
+            archive_mux = element('mp4mux', 'archive-mux')
+            archive_mux.set_property('faststart', True)
+            archive_sink = element('filesink', 'archive-file')
+            archive_sink.set_property('location', str(output))
+            archive_sink.set_property('sync', False)
+            fork = element('tee', 'encoded-video')
+            link(video + [fork])
+            link([fork, element('queue'), mux, sink])
+            link([fork, element('queue'), archive_mux, archive_sink])
+        else:
+            link(video + [element('queue'), mux, sink])
     elif replay:
         if codec != 'vp8':
             raise ValueError('Replay requires VP8 / WebM.')
@@ -164,6 +177,11 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
             pad = mux.request_pad_simple('audio_%u')
             if audio_chain[-1].get_static_pad('src').link(pad) != Gst.PadLinkReturn.OK:
                 raise RuntimeError('Could not connect replay audio.')
+        elif archive:
+            fork = element('tee', 'encoded-audio')
+            link([audio_chain[-1], fork])
+            link([fork, element('queue'), mux])
+            link([fork, element('queue'), archive_mux])
         else:
             link([audio_chain[-1], mux])
     return pipeline
@@ -237,7 +255,7 @@ class Recorder:
         handle, descriptors = self.connection.call_with_unix_fd_list_sync(BUS, PATH, IFACE, 'OpenPipeWireRemote', GLib.Variant('(oa{sv})', (self.session, {})), GLib.VariantType.new('(h)'), Gio.DBusCallFlags.NONE, 10000, None, None)
         self.fd = descriptors.get(handle.unpack()[0])
         # Prefer portal v6 stream serials; use legacy node IDs on older portals.
-        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir), stream=getattr(self.args,"stream_location",None), audio_bitrate=getattr(self.args,"audio_bitrate",128))
+        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir), stream=getattr(self.args,"stream_location",None), audio_bitrate=getattr(self.args,"audio_bitrate",128), archive=getattr(self.args,"archive",False))
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message', self.bus_message)
@@ -262,7 +280,7 @@ class Recorder:
             if new == Gst.State.PLAYING:
                 event('streaming' if getattr(self.args,'stream',False) else 'recording', output=self.args.output)
         elif message.type == Gst.MessageType.EOS:
-            event('stream-stopped' if getattr(self.args,'stream',False) else 'buffer-stopped' if self.replay_dir else 'saved', output=self.args.output)
+            event('stream-stopped' if getattr(self.args,'stream',False) else 'buffer-stopped' if self.replay_dir else 'saved', output=self.args.output, archived=bool(getattr(self.args,'archive',False)))
             self.loop.quit()
 
     def save_replay(self):
@@ -358,6 +376,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--stream', action='store_true')
+    parser.add_argument('--archive', action='store_true')
     parser.add_argument('--output')
     parser.add_argument('--fps', type=int, choices=[30, 60], default=30)
     parser.add_argument('--audio', action='store_true')
@@ -381,6 +400,8 @@ if __name__ == '__main__':
             config = json.loads(sys.stdin.readline(8193))
             args.stream_location = stream_location(config.get('server'), config.get('key'))
             args.audio_bitrate = int(config.get('audioBitrate',128))
+            if args.archive and (not args.output or not Path(args.output).is_absolute() or Path(args.output).exists()):
+                raise ValueError()
             if args.codec != 'h264' or args.replay_seconds or args.audio_bitrate not in (96,128,160,192,256,320):
                 raise ValueError()
             if not streaming_supported():
@@ -389,6 +410,8 @@ if __name__ == '__main__':
             event('error', message='Invalid streaming configuration or missing H.264/AAC/RTMP plugins.')
             raise SystemExit(1)
         raise SystemExit(Recorder(args).run())
+    if args.archive:
+        parser.error('Archive requires streaming mode.')
     if not args.output or not Path(args.output).is_absolute() or Path(args.output).exists():
         parser.error('A new absolute output path is required.')
     if args.replay_seconds and (args.codec != 'vp8' or not shutil.which('ffmpeg')):

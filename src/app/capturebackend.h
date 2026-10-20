@@ -61,18 +61,19 @@ class CaptureBackend final:public QObject {
   auto resolution=options.value("resolution","native").toString();if(!QStringList{"native","720p","1080p"}.contains(resolution))resolution="native";
   output_=folder()+"/Redline-"+QDateTime::currentDateTimeUtc().toString("yyyyMMdd-HHmmss")+"-"+QUuid::createUuid().toString(QUuid::WithoutBraces).left(8)+"."+extension;
   QStringList args{helper(),"--output",output_,"--fps",QString::number(fps),"--codec",codec,"--bitrate",QString::number(bitrate),"--resolution",resolution};
+  const bool archive=streamMode_ && options.value("archive",false).toBool();
   streamConfig_.clear();auto env=QProcessEnvironment::systemEnvironment();
   if(streamMode_){
    QUrl url(options.value("server").toString());auto key=options.value("key").toString();
    if(!url.isValid() || !QStringList{"rtmp","rtmps"}.contains(url.scheme()) || url.host().isEmpty() || !url.userInfo().isEmpty() || url.hasQuery() || url.hasFragment() || url.path().remove('/').isEmpty() || key.isEmpty() || key.size()>1024){message_="Enter a valid RTMP/RTMPS server URL and stream key.";emit changed();return;}
    streamConfig_=QJsonDocument(QJsonObject{{"server",url.toString()},{"key",key},{"audioBitrate",options.value("audioBitrate",128).toInt()}}).toJson(QJsonDocument::Compact)+'\n';
-   args<<"--stream";env.insert("GST_DEBUG","0");env.remove("GST_DEBUG_FILE");env.remove("GST_DEBUG_DUMP_DOT_DIR");
+   args<<"--stream";if(archive)args<<"--archive";env.insert("GST_DEBUG","0");env.remove("GST_DEBUG_FILE");env.remove("GST_DEBUG_DUMP_DOT_DIR");
   }
   process_.setProcessEnvironment(env);
   if(replayMode_){int length=options.value("replaySeconds",30).toInt();if(!QList<int>{15,30,60,120}.contains(length))length=30;args<<"--replay-seconds"<<QString::number(length);}
   if(options.value("systemAudio",false).toBool() && audio_)args<<"--audio";
   if(options.value("microphone",false).toBool() && audio_)args<<"--microphone";
-  if(streamMode_)output_.clear();
+  if(streamMode_ && !archive)output_.clear();
   buffer_.clear();elapsed_.invalidate();finalSeconds_=0;active_=true;state_="selecting";message_="Choose a screen or window in the system dialog.";emit changed();process_.start("/usr/bin/python3",args);
  }
  Q_INVOKABLE void takeScreenshot(){
@@ -94,6 +95,6 @@ class CaptureBackend final:public QObject {
  static QString helper(){return QCoreApplication::applicationDirPath()+"/../libexec/redline/redline-capture.py";}
  static QString pictures(){return QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)+"/Redline";}
  static QString folder(){return QStandardPaths::writableLocation(QStandardPaths::MoviesLocation)+"/Redline";}
- void read(){buffer_+=process_.readAllStandardOutput();if(buffer_.size()>65536)buffer_.remove(0,buffer_.size()-65536);while(buffer_.contains('\n')){int end=buffer_.indexOf('\n');auto obj=QJsonDocument::fromJson(buffer_.left(end)).object();buffer_.remove(0,end+1);auto next=obj.value("state").toString();if(next.isEmpty())continue;if(next.startsWith("replay-")){if(next=="replay-saved"){message_="Replay saved.";refreshMedia();}else if(next=="replay-exporting")message_="Saving replay…";else if(next=="replay-notice")message_=obj.value("message").toString();else if(next=="replay-ready")message_="Replay buffer active. Completed seconds: "+QString::number(obj.value("buffered").toInt());emit changed();continue;}state_=next;if(next=="saved" || next=="error")finalSeconds_=elapsed_.isValid()?int(elapsed_.elapsed()/1000):0;if(next=="recording" || next=="streaming"){elapsed_.start();timer_.start();message_=streamMode_?"Sending stream. Check your service dashboard before making it public.":replayMode_?"Replay buffer active.":"Recording in progress.";}else if(next=="stream-stopped"){timer_.stop();message_="Stream stopped.";}else if(next=="saved"){timer_.stop();message_="Recording saved.";}else if(next=="error"){message_=obj.value("message").toString().left(500);timer_.stop();}emit changed();}}
+ void read(){buffer_+=process_.readAllStandardOutput();if(buffer_.size()>65536)buffer_.remove(0,buffer_.size()-65536);while(buffer_.contains('\n')){int end=buffer_.indexOf('\n');auto obj=QJsonDocument::fromJson(buffer_.left(end)).object();buffer_.remove(0,end+1);auto next=obj.value("state").toString();if(next.isEmpty())continue;if(next.startsWith("replay-")){if(next=="replay-saved"){message_="Replay saved.";refreshMedia();}else if(next=="replay-exporting")message_="Saving replay…";else if(next=="replay-notice")message_=obj.value("message").toString();else if(next=="replay-ready")message_="Replay buffer active. Completed seconds: "+QString::number(obj.value("buffered").toInt());emit changed();continue;}state_=next;if(next=="saved" || next=="error" || next=="stream-stopped")finalSeconds_=elapsed_.isValid()?int(elapsed_.elapsed()/1000):0;if(next=="recording" || next=="streaming"){elapsed_.start();timer_.start();message_=streamMode_?"Sending stream. Check your service dashboard before making it public.":replayMode_?"Replay buffer active.":"Recording in progress.";}else if(next=="stream-stopped"){timer_.stop();message_=obj.value("archived").toBool()?"Stream stopped. Local archive saved in Media.":"Stream stopped.";}else if(next=="saved"){timer_.stop();message_="Recording saved.";}else if(next=="error"){message_=obj.value("message").toString().left(500);timer_.stop();}emit changed();}}
  signals:void changed();
 };

@@ -14,10 +14,14 @@ The status indicates local pipeline activity, not verified public platform deliv
 
 ## Remaining scope
 
-Live in-app video preview, OAuth account sign-in, chat/viewer APIs, scene compositing, hardware encoder selection, adaptive bitrate, enhanced filtering and simultaneous local archiving are not implemented. Archive Stream is explicitly disabled. Stream keys are session-only; keyring persistence is not implemented. RTMPS uses the sink's default TLS certificate validation. No external streaming service has been tested yet.
+Live in-app video preview, OAuth account sign-in, chat/viewer APIs, scene compositing, hardware encoder selection, adaptive bitrate and enhanced filtering are not implemented. Stream keys are session-only; keyring persistence is not implemented. RTMPS uses the sink's default TLS certificate validation. No external streaming service has been tested yet.
 
 ## Validation
 
-Generated content only: a loopback FFmpeg RTMP receiver accepted 720p H.264/AAC and its saved stream decoded completely. Tests cover destination validation, Preview refusal before credential/portal access, credential redaction in streaming errors, and a bounded failure for an unreachable loopback server. The UI suite checks routing, presets and empty credential fields. Actual desktop capture was validated separately for ordinary recording; desktop-to-external-service streaming is pending.
+Generated content only: a loopback FFmpeg RTMP receiver accepted 720p H.264/AAC and its saved stream decoded completely. Tests cover destination validation, Preview refusal before credential/portal access, credential redaction in streaming errors, and a bounded failure for an unreachable loopback server. The UI suite checks routing, presets and empty credential fields. Archive Stream uses the same encoded H.264/AAC buffers for the RTMP and MP4 branches. A generated live-source test invokes Stop/EOS after four seconds, verifies one video/audio encoder, and fully decodes both the received stream and finalized archive. Actual desktop capture was validated separately for ordinary recording; desktop-to-external-service streaming is pending.
 
 The transport follows the documented [GStreamer rtmp2sink](https://gstreamer.freedesktop.org/documentation/rtmp2/rtmp2sink.html) and [flvmux](https://gstreamer.freedesktop.org/documentation/flv/flvmux.html) interfaces.
+
+## Archive Stream
+
+An opt-in Archive Stream switch saves a local MP4 in Videos/Redline while sending RTMP. The completed file appears in Media after Stop Streaming. The unfinished archive is hidden from Media during capture. Encoding is shared; only muxing and disk writing are additional work. A normal Stop/EOS is required to finalize MP4. A connection failure, disk error or forced shutdown can leave an incomplete archive; automatic recovery/continuing recording after a network failure is not implemented.

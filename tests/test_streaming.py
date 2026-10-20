@@ -12,6 +12,7 @@ import socket
 import subprocess
 import tempfile
 import time
+import threading
 import unittest
 spec=importlib.util.spec_from_file_location('capture',pathlib.Path(__file__).parents[1]/'tools/redline-capture.py')
 capture=importlib.util.module_from_spec(spec);spec.loader.exec_module(capture)
@@ -47,29 +48,54 @@ class StreamingTests(unittest.TestCase):
    finally:pipeline.set_state(capture.Gst.State.NULL)
  @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe') and capture.streaming_supported(),'RTMP/H264/AAC and ffmpeg required')
  def test_loopback_video_and_audio(self):
+  self.receive(False)
+ def test_loopback_stream_and_archive(self):
+  self.receive(True)
+ def receive(self,archive):
+  if not (shutil.which("ffmpeg") and shutil.which("ffprobe") and capture.streaming_supported()):self.skipTest("Streaming dependencies required")
   with tempfile.TemporaryDirectory() as folder:
    output=pathlib.Path(folder)/'received.flv'
    with socket.socket() as sock:
     sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
    endpoint=capture.stream_location(f'rtmp://127.0.0.1:{port}/live','test-only')
    receiver=subprocess.Popen(['ffmpeg','-nostdin','-v','error','-listen','1','-i',endpoint,'-c','copy','-y',str(output)],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-   pipeline=None
+   pipeline=None;stop_timer=None
    try:
     time.sleep(.4)
     self.assertIsNone(receiver.poll(),'Local RTMP receiver failed to start')
-    pipeline=capture.make_pipeline(None,synthetic=True,codec='h264',audio=True,stream=endpoint,audio_bitrate=192,resolution='720p',bitrate=3)
+    local=pathlib.Path(folder)/'archive.mp4'
+    pipeline=capture.make_pipeline(str(local) if archive else None,synthetic=True,codec='h264',audio=True,stream=endpoint,audio_bitrate=192,resolution='720p',bitrate=3,archive=archive)
     pipeline.get_by_name('screen').set_property('num-buffers',120)
     pipeline.get_by_name('system-audio').set_property('num-buffers',190)
+    if archive:
+     elements=[];iterator=pipeline.iterate_elements()
+     while True:
+      status,element=iterator.next()
+      if status==capture.Gst.IteratorResult.DONE:break
+      self.assertEqual(status,capture.Gst.IteratorResult.OK)
+      elements.append(element)
+     self.assertEqual(sum(e.get_factory().get_name()=='x264enc' for e in elements),1)
+     self.assertEqual(sum(e.get_factory().get_name()=='avenc_aac' for e in elements),1)
+     for name in ('screen','system-audio'):
+      source=pipeline.get_by_name(name);source.set_property('num-buffers',-1);source.set_property('is-live',True)
+     stop_timer=threading.Timer(4,lambda:pipeline.send_event(capture.Gst.Event.new_eos()))
+     stop_timer.start()
     pipeline.set_state(capture.Gst.State.PLAYING)
     message=pipeline.get_bus().timed_pop_filtered(30*capture.Gst.SECOND,capture.Gst.MessageType.ERROR|capture.Gst.MessageType.EOS)
     self.assertIsNotNone(message);self.assertEqual(message.type,capture.Gst.MessageType.EOS,message.parse_error() if message.type==capture.Gst.MessageType.ERROR else '')
     pipeline.set_state(capture.Gst.State.NULL)
     receiver.communicate(timeout=10)
+    if archive:
+     local_probe=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_streams','-show_format','-of','json',str(local)]))
+     self.assertEqual({s['codec_name'] for s in local_probe['streams']},{'h264','aac'})
+     self.assertGreater(float(local_probe['format']['duration']),3)
+     subprocess.run(['ffmpeg','-v','error','-i',str(local),'-f','null','-'],check=True,timeout=15)
     probe=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_streams','-of','json',str(output)]))
     self.assertEqual({s['codec_name'] for s in probe['streams']},{'h264','aac'})
     video=next(s for s in probe['streams'] if s['codec_type']=='video');self.assertEqual((video['width'],video['height']),(1280,720))
     subprocess.run(['ffmpeg','-v','error','-i',str(output),'-f','null','-'],check=True,timeout=15)
    finally:
+    if stop_timer:stop_timer.cancel()
     if pipeline:pipeline.set_state(capture.Gst.State.NULL)
     if receiver.poll() is None:receiver.terminate();receiver.communicate(timeout=5)
 
