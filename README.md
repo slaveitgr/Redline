@@ -40,19 +40,21 @@ Actual Redline interface from the development build.
 
 Live streaming, advanced color adjustments and additional feature parity are under development. See the [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
 
-### Download Alpha 1
+### Download Alpha 2 (native package)
 
-[**Download Redline 0.9.0 Alpha 1**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.1)
+[**Download Redline 0.9.0 Alpha 2**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.2)
 
 - **Ubuntu 26.10 amd64:** native `.deb` with hardware services and dependency installation through APT.
-- **AppImage Preview x86_64:** try the interface and monitoring without installing hardware services. Built on Ubuntu 26.10; older distribution compatibility is not yet verified.
+- [**AppImage Preview x86_64 (Alpha 1)**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.1): try the interface and monitoring without installing hardware services. Built on Ubuntu 26.10; older distribution compatibility is not yet verified.
 - **SHA256SUMS:** checksums are included with the release.
 
 ```sh
-sudo apt install ./redline-graphics_0.9.0-alpha1_amd64.deb
+sudo apt install ./redline-graphics_0.9.0-alpha2_amd64.deb
 ```
 
 The native package has passed clean-container installation, interface/graphics checks, removal, reinstallation and purge. The AppImage has passed the automated interface checks. Interactive hardware writes, desktop capture and headset streaming require further validation.
+
+Alpha 2 hides the optional read-only Preview launcher from the application menu. Start **Redline** or run `redline` for the normal native application.
 
 ### Build and try
 
@@ -105,7 +107,7 @@ AMD Software: Adrenalin Edition is the interface reference. Redline is an indepe
 
 ### Λήψη
 
-[**Κατέβασε το Redline 0.9.0 Alpha 1**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.1): `.deb` για Ubuntu 26.10 amd64, AppImage Preview x86_64 και checksums. Τα builds Debian ελέγχονται χωριστά στο GitHub Actions.
+[**Κατέβασε το Redline 0.9.0 Alpha 2**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.2): `.deb` για Ubuntu 26.10 amd64, AppImage Preview x86_64 και checksums. Τα builds Debian ελέγχονται χωριστά στο GitHub Actions.
 
 ### Τι προσφέρει σήμερα
 
