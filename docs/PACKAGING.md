@@ -32,7 +32,7 @@ Install the appropriate verified build with the distribution's package manager:
 sudo apt install ./redline-graphics_0.9.0-alpha1_amd64.deb
 ```
 
-Start **Redline Preview** to inspect the interface without hardware writes. Normal **Redline** uses narrowly scoped services and first-run authorization for the local hardware-access group. Installing/updating optional third-party software can still require normal operating-system authorization.
+Launch **Redline** from the application menu, or run `redline`, for the normal application. The optional `redline-preview` command inspects the interface without hardware writes; its desktop entry is hidden to avoid confusing the two modes. Normal **Redline** uses narrowly scoped services and first-run authorization for the local hardware-access group. Installing/updating optional third-party software can still require normal operating-system authorization.
 
 ## AppImage preview build
 

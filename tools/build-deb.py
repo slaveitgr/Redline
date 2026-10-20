@@ -61,7 +61,7 @@ def main():
         desktop = stage / 'usr/share/applications/io.github.redline.native.Redline.desktop'
         desktop.write_text(desktop.read_text().replace('Exec=redline-native', 'Exec=redline'))
         preview = desktop.with_name('io.github.redline.native.Preview.desktop')
-        preview.write_text('[Desktop Entry]\nName=Redline Preview\nComment=Review Redline without hardware writes, installs or recording\nExec=redline-preview\nIcon=redline\nType=Application\nTerminal=false\nCategories=System;Settings;\n')
+        preview.write_text('[Desktop Entry]\nName=Redline Preview (read-only)\nNoDisplay=true\nComment=Review Redline without hardware writes, installs or recording\nExec=redline-preview\nIcon=redline\nType=Application\nTerminal=false\nCategories=System;Settings;\n')
         docs = stage / 'usr/share/doc/redline-graphics'
         docs.mkdir(parents=True)
         shutil.copy2(PROJECT / 'COPYING', docs / 'COPYING')
