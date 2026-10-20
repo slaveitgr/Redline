@@ -31,6 +31,9 @@ class CapturePreviewProvider final:public QQuickImageProvider {
 };
 class CaptureBackend final:public QObject {
  Q_OBJECT
+ Q_PROPERTY(QVariantList audioDevices READ audioDevices NOTIFY devicesChanged)
+ Q_PROPERTY(QString audioDeviceMessage READ audioDeviceMessage NOTIFY devicesChanged)
+ Q_PROPERTY(bool audioPreview READ audioPreview NOTIFY changed)
  Q_PROPERTY(bool cameraSupported READ cameraSupported NOTIFY changed)
  Q_PROPERTY(bool cameraPreview READ cameraPreview NOTIFY changed)
  Q_PROPERTY(bool sceneSupported READ sceneSupported NOTIFY changed)
@@ -60,9 +63,26 @@ class CaptureBackend final:public QObject {
   connect(&process_,&QProcess::finished,this,[this](int code){read();timer_.stop();active_=false;clearPreview();sceneFiles_.reset();if(code && state_!="error"){state_="error";message_="Recording failed. Check the desktop portal and media dependencies.";}else if(state_=="selecting" || state_=="stopping")state_="idle";refreshMedia();emit changed();});
   connect(&process_,&QProcess::errorOccurred,this,[this](QProcess::ProcessError e){if(e==QProcess::FailedToStart){streamConfig_.fill(0);streamConfig_.clear();active_=false;state_="error";message_="Could not start the capture service.";emit changed();}});
   auto check=new QProcess(this);connect(check,&QProcess::finished,this,[this,check](int){auto obj=QJsonDocument::fromJson(check->readAllStandardOutput().trimmed()).object();supported_=obj.value("supported").toBool();previewSupported_=obj.value("preview").toBool();sceneSupported_=obj.value("scenes").toBool();cameraSupported_=obj.value("camera").toBool();streamSupported_=obj.value("streaming").toBool();replaySupported_=obj.value("replay").toBool();audio_=obj.value("audio").toBool();codecs_=obj.value("codecs").toArray().toVariantList();if(!supported_)message_="Capture dependencies are unavailable.";check->deleteLater();emit changed();});
-  check->start("/usr/bin/python3",{helper(),"--check"});refreshMedia();
+  check->start("/usr/bin/python3",{helper(),"--check"});refreshMedia();refreshAudioDevices();
  }
  ~CaptureBackend(){if(process_.state()!=QProcess::NotRunning){process_.write("stop\n");if(!process_.waitForFinished(3500)){process_.terminate();if(!process_.waitForFinished(3500)){process_.kill();process_.waitForFinished(500);}}}for(auto p:findChildren<QProcess*>()){disconnect(p,nullptr,this,nullptr);if(p->state()!=QProcess::NotRunning){p->terminate();if(!p->waitForFinished(2500)){p->kill();p->waitForFinished(500);}}}}
+ QVariantList audioDevices()const{return audioDevices_;}QString audioDeviceMessage()const{return audioDeviceMessage_;}bool audioPreview()const{return active_ && audioOnly_;}
+ Q_INVOKABLE void refreshAudioDevices(){
+  if(deviceScan_)return;deviceScan_=true;auto scan=new QProcess(this);auto timeout=new QTimer(scan);timeout->setSingleShot(true);connect(timeout,&QTimer::timeout,scan,&QProcess::kill);
+  connect(scan,&QProcess::finished,this,[this,scan](int){deviceScan_=false;auto obj=QJsonDocument::fromJson(scan->readAllStandardOutput().trimmed()).object();audioDevices_=obj.value("devices").toArray().toVariantList();audioDeviceMessage_=obj.value("message").toString();if(obj.isEmpty())audioDeviceMessage_="Audio device scan failed. Refresh and check the audio service.";emit devicesChanged();scan->deleteLater();});
+  connect(scan,&QProcess::errorOccurred,this,[this,scan](QProcess::ProcessError e){if(e==QProcess::FailedToStart){deviceScan_=false;audioDeviceMessage_="Could not scan audio devices.";emit devicesChanged();scan->deleteLater();}});
+  scan->start("/usr/bin/python3",{helper(),"--audio-devices"});timeout->start(5000);
+ }
+ Q_INVOKABLE void setAudio(QVariantMap config){
+  if(!active_ || cameraOnly_ || qEnvironmentVariableIsSet("REDLINE_READ_ONLY"))return;
+  config.insert("command","audio");process_.write(QJsonDocument::fromVariant(config).toJson(QJsonDocument::Compact)+'\n');
+ }
+ Q_INVOKABLE void previewAudio(QVariantMap options){
+  if(active_ || !audio_ || qEnvironmentVariableIsSet("REDLINE_READ_ONLY"))return;
+  if(!options.value("systemAudio").toBool() && !options.value("microphone").toBool()){message_="Enable an audio source before testing.";emit changed();return;}
+  sceneFiles_=std::make_unique<QTemporaryDir>("/tmp/redline-audio-XXXXXX");QStringList args{helper(),"--audio-preview"};if(!prepareAudio(options,args))return;
+  streamConfig_.clear();audioOnly_=true;cameraOnly_=false;streamMode_=replayMode_=false;output_.clear();clearPreview();buffer_.clear();elapsed_.invalidate();finalSeconds_=0;active_=true;state_="selecting";message_="Opening audio test. No recording is saved.";emit changed();process_.setProcessEnvironment(QProcessEnvironment::systemEnvironment());process_.start("/usr/bin/python3",args);
+ }
  bool replaySupported()const{return replaySupported_;}bool replayMode()const{return replayMode_;}
  bool cameraSupported()const{return cameraSupported_;}bool cameraPreview()const{return active_ && cameraOnly_;}
  bool sceneSupported()const{return sceneSupported_;}
@@ -73,7 +93,7 @@ class CaptureBackend final:public QObject {
   if(active_ || !supported_)return;
   if(qEnvironmentVariableIsSet("REDLINE_READ_ONLY")){message_="Screen recording is disabled in UI preview. Open normal Redline.";emit changed();return;}
   if(!QDir().mkpath(folder())){message_="Could not create the recordings folder.";emit changed();return;}
-  cameraOnly_=false;cameraActive_=false;sceneSerial_=0;
+  audioOnly_=false;cameraOnly_=false;cameraActive_=false;sceneSerial_=0;
   streamMode_=options.value("stream",false).toBool();
   if(streamMode_ && !streamSupported_){message_="Streaming requires H.264, AAC and RTMP GStreamer plugins.";emit changed();return;}
   replayMode_=options.value("replay",false).toBool();if(replayMode_ && !replaySupported_){message_="Replay requires ffmpeg and splitmuxsink.";emit changed();return;}
@@ -110,15 +130,14 @@ class CaptureBackend final:public QObject {
    }
   }
   if(previewSupported_)args<<"--preview";
-  if(options.value("systemAudio",false).toBool() && audio_)args<<"--audio";
-  if(options.value("microphone",false).toBool() && audio_)args<<"--microphone";
+  if(!prepareAudio(options,args))return;
   if(streamMode_ && !archive)output_.clear();
   clearPreview();buffer_.clear();elapsed_.invalidate();finalSeconds_=0;active_=true;state_="selecting";message_="Choose a screen or window in the system dialog.";emit changed();process_.start("/usr/bin/python3",args);
  }
  Q_INVOKABLE void previewCamera(QString device,QString resolution){
   if(active_ || !cameraSupported_ || !previewSupported_ || qEnvironmentVariableIsSet("REDLINE_READ_ONLY")){message_="Camera preview is unavailable while capturing or in Preview mode.";emit changed();return;}
   if(!QRegularExpression("^/dev/video[0-9]+$").match(device).hasMatch() || !QStringList{"auto","640x480","1280x720"}.contains(resolution)){message_="Choose a camera device and supported resolution.";emit changed();return;}
-  streamConfig_.clear();sceneFiles_.reset();cameraOnly_=true;streamMode_=replayMode_=false;output_.clear();clearPreview();buffer_.clear();elapsed_.invalidate();finalSeconds_=0;active_=true;state_="selecting";message_="Opening camera preview. No recording is saved.";emit changed();process_.setProcessEnvironment(QProcessEnvironment::systemEnvironment());process_.start("/usr/bin/python3",{helper(),"--camera-preview","--camera-device",device,"--camera-resolution",resolution});
+  streamConfig_.clear();sceneFiles_.reset();audioOnly_=false;cameraOnly_=true;streamMode_=replayMode_=false;output_.clear();clearPreview();buffer_.clear();elapsed_.invalidate();finalSeconds_=0;active_=true;state_="selecting";message_="Opening camera preview. No recording is saved.";emit changed();process_.setProcessEnvironment(QProcessEnvironment::systemEnvironment());process_.start("/usr/bin/python3",{helper(),"--camera-preview","--camera-device",device,"--camera-resolution",resolution});
  }
  Q_INVOKABLE void applyScene(QVariantMap scene){
   if(!active_ || cameraOnly_ || !sceneFiles_ || !QStringList{"recording","streaming"}.contains(state_)){message_="Start capture before applying a live scene.";emit changed();return;}
@@ -143,6 +162,14 @@ class CaptureBackend final:public QObject {
  Q_INVOKABLE void openFolder(){QDir().mkpath(folder());QDesktopServices::openUrl(QUrl::fromLocalFile(folder()));}
  Q_INVOKABLE bool openMedia(QString path){auto info=QFileInfo(path);const auto base=QFileInfo(info.suffix()=="png"?pictures():folder()).canonicalFilePath();return !base.isEmpty() && info.isFile() && !info.isSymLink() && QStringList{"webm","mp4","png"}.contains(info.suffix()) && info.canonicalPath()==base && QDesktopServices::openUrl(QUrl::fromLocalFile(info.canonicalFilePath()));}
  private:
+ bool prepareAudio(const QVariantMap &options,QStringList &args){
+  if(!audio_)return true;
+  if(!sceneFiles_)sceneFiles_=std::make_unique<QTemporaryDir>("/tmp/redline-audio-XXXXXX");
+  QFile file(sceneFiles_->path()+"/audio.json");if(!sceneFiles_->isValid() || !file.open(QIODevice::WriteOnly)){message_="Could not prepare audio settings.";emit changed();return false;}
+  file.write(QJsonDocument::fromVariant(options.value("audioConfig").toMap()).toJson(QJsonDocument::Compact));file.close();args<<"--audio-file"<<file.fileName();
+  if(options.value("systemAudio").toBool())args<<"--audio";if(options.value("microphone").toBool())args<<"--microphone";return true;
+ }
+ QVariantList audioDevices_;QString audioDeviceMessage_;bool deviceScan_=false,audioOnly_=false;
  std::unique_ptr<QTemporaryDir> sceneFiles_;
  std::shared_ptr<CapturePreviewFrame> preview_;int frameNumber_=0;bool previewSupported_=false,sceneSupported_=false,cameraSupported_=false,cameraOnly_=false,cameraActive_=false;int sceneSerial_=0;QString cameraDevice_,cameraResolution_;double systemLevel_=0,microphoneLevel_=0;
  void clearPreview(){{QMutexLocker lock(&preview_->mutex);preview_->image=QImage();}systemLevel_=microphoneLevel_=0;emit previewChanged();emit levelsChanged();}
@@ -150,6 +177,7 @@ class CaptureBackend final:public QObject {
  static QString helper(){return QCoreApplication::applicationDirPath()+"/../libexec/redline/redline-capture.py";}
  static QString pictures(){return QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)+"/Redline";}
  static QString folder(){return QStandardPaths::writableLocation(QStandardPaths::MoviesLocation)+"/Redline";}
- void read(){buffer_+=process_.readAllStandardOutput();if(buffer_.size()>1048576)buffer_.remove(0,buffer_.size()-1048576);while(buffer_.contains('\n')){int end=buffer_.indexOf('\n');auto obj=QJsonDocument::fromJson(buffer_.left(end)).object();buffer_.remove(0,end+1);auto next=obj.value("state").toString();if(next.isEmpty())continue;if(next=="scene-applied" || next=="scene-rejected"){message_=next=="scene-applied"?"Scene applied without restarting capture.":obj.value("message").toString();if(next=="scene-applied" && sceneFiles_){int ack=obj.value("serial").toInt();for(const auto &f:QDir(sceneFiles_->path()).entryInfoList({"overlay*.png"},QDir::Files)){auto name=f.baseName();bool ok=false;int number=name.mid(8).toInt(&ok);if(name=="overlay" || (ok && number<ack))QFile::remove(f.absoluteFilePath());}}emit changed();continue;}if(next=="preview"){const auto encoded=obj.value("jpeg").toString().toLatin1();if(encoded.size()<=270000){auto image=QImage::fromData(QByteArray::fromBase64(encoded),"JPEG");if(!image.isNull() && image.size()==QSize(640,360)){{QMutexLocker lock(&preview_->mutex);preview_->image=image;}++frameNumber_;emit previewChanged();}}continue;}if(next=="audio-level"){const double value=qBound(0.0,obj.value("value").toDouble(),1.0);if(obj.value("source").toString()=="system-level")systemLevel_=value;else if(obj.value("source").toString()=="microphone-level")microphoneLevel_=value;emit levelsChanged();continue;}if(next.startsWith("replay-")){if(next=="replay-saved"){message_="Replay saved.";refreshMedia();}else if(next=="replay-exporting")message_="Saving replay…";else if(next=="replay-notice")message_=obj.value("message").toString();else if(next=="replay-ready")message_="Replay buffer active. Completed seconds: "+QString::number(obj.value("buffered").toInt());emit changed();continue;}state_=next;if(next=="saved" || next=="error" || next=="stream-stopped")finalSeconds_=elapsed_.isValid()?int(elapsed_.elapsed()/1000):0;if(next=="recording" || next=="streaming" || next=="camera-preview"){elapsed_.start();timer_.start();message_=cameraOnly_?"Camera preview active. No recording is saved.":streamMode_?"Sending stream. Check your service dashboard before making it public.":replayMode_?"Replay buffer active.":"Recording in progress.";}else if(next=="camera-stopped"){timer_.stop();message_="Camera preview stopped.";}else if(next=="stream-stopped"){timer_.stop();message_=obj.value("archived").toBool()?"Stream stopped. Local archive saved in Media.":"Stream stopped.";}else if(next=="saved"){timer_.stop();message_="Recording saved.";}else if(next=="error"){message_=obj.value("message").toString().left(500);timer_.stop();}emit changed();}}
- signals:void changed();void previewChanged();void levelsChanged();
+ void read(){buffer_+=process_.readAllStandardOutput();if(buffer_.size()>1048576)buffer_.remove(0,buffer_.size()-1048576);while(buffer_.contains('\n')){int end=buffer_.indexOf('\n');auto obj=QJsonDocument::fromJson(buffer_.left(end)).object();buffer_.remove(0,end+1);auto next=obj.value("state").toString();if(next.isEmpty())continue;if(next=="audio-applied")continue;if(next=="scene-applied" || next=="scene-rejected"){message_=next=="scene-applied"?"Scene applied without restarting capture.":obj.value("message").toString();if(next=="scene-applied" && sceneFiles_){int ack=obj.value("serial").toInt();for(const auto &f:QDir(sceneFiles_->path()).entryInfoList({"overlay*.png"},QDir::Files)){auto name=f.baseName();bool ok=false;int number=name.mid(8).toInt(&ok);if(name=="overlay" || (ok && number<ack))QFile::remove(f.absoluteFilePath());}}emit changed();continue;}if(next=="preview"){const auto encoded=obj.value("jpeg").toString().toLatin1();if(encoded.size()<=270000){auto image=QImage::fromData(QByteArray::fromBase64(encoded),"JPEG");if(!image.isNull() && image.size()==QSize(640,360)){{QMutexLocker lock(&preview_->mutex);preview_->image=image;}++frameNumber_;emit previewChanged();}}continue;}if(next=="audio-level"){const double value=qBound(0.0,obj.value("value").toDouble(),1.0);if(obj.value("source").toString()=="system-level")systemLevel_=value;else if(obj.value("source").toString()=="microphone-level")microphoneLevel_=value;emit levelsChanged();continue;}if(next.startsWith("replay-")){if(next=="replay-saved"){message_="Replay saved.";refreshMedia();}else if(next=="replay-exporting")message_="Saving replay…";else if(next=="replay-notice")message_=obj.value("message").toString();else if(next=="replay-ready")message_="Replay buffer active. Completed seconds: "+QString::number(obj.value("buffered").toInt());emit changed();continue;}state_=next;if(next=="saved" || next=="error" || next=="stream-stopped")finalSeconds_=elapsed_.isValid()?int(elapsed_.elapsed()/1000):0;if(next=="recording" || next=="streaming" || next=="camera-preview" || next=="audio-preview"){elapsed_.start();timer_.start();message_=audioOnly_?"Audio test active. No recording is saved.":cameraOnly_?"Camera preview active. No recording is saved.":streamMode_?"Sending stream. Check your service dashboard before making it public.":replayMode_?"Replay buffer active.":"Recording in progress.";}else if(next=="audio-stopped"){timer_.stop();message_="Audio test stopped.";}else if(next=="camera-stopped"){timer_.stop();message_="Camera preview stopped.";}else if(next=="stream-stopped"){timer_.stop();message_=obj.value("archived").toBool()?"Stream stopped. Local archive saved in Media.":"Stream stopped.";}else if(next=="saved"){timer_.stop();message_="Recording saved.";}else if(next=="error"){message_=obj.value("message").toString().left(500);timer_.stop();}emit changed();}}
+ signals:
+ void devicesChanged();void changed();void previewChanged();void levelsChanged();
 };

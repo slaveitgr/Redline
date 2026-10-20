@@ -25,6 +25,8 @@ Actual Redline interface from the development build.
 
 ![Recording options](docs/screenshots/recording.png)
 
+![Audio mixer](docs/screenshots/audio-mixer.png)
+
 ![Custom Live Stream](docs/screenshots/streaming.png)
 
 ![Scene Editor](docs/screenshots/scenes.png)
@@ -42,7 +44,7 @@ Actual Redline interface from the development build.
 | **Local AI** | Ollama model discovery and session chat, with an optional hardware snapshot attached by the user. Requires a running local Ollama service and model. |
 | **VR setup** | ALVR launcher installation and launch; WiVRn installation through an existing Flathub setup. Headset pairing and streaming are handled by the selected backend. |
 | **Display** | GNOME resolution/refresh, desktop scaling, advertised Adaptive Sync and color modes, with the desktop’s confirmation/revert dialog. |
-| **Recording & Media** | Experimental VP8/VP9/WebM and H.264/MP4 profiles, bitrate/resolution, microphone/system audio mixing, portal screenshots and saved media. One real desktop/audio recording completed and decoded successfully; an earlier intermittent stop failure remains under investigation. |
+| **Recording & Media** | Experimental VP8/VP9/WebM and H.264/MP4 profiles, bitrate/resolution, selected microphone/system audio, live gain/mute, audio-only level testing, portal screenshots and saved media. One real desktop/audio recording completed and decoded successfully; an earlier intermittent stop failure remains under investigation. |
 | **System** | Hardware and driver information, driver compatibility catalog, settings export/import and scoped reset. |
 | **Live Stream** | Custom RTMP/RTMPS, H.264/AAC software encoding, streaming profiles, resolution/FPS/bitrate and optional system audio/microphone and simultaneous local MP4 archiving. Keys are session-only. Loopback transmission tested; in-memory live preview and audio activity meters implemented; external service validation pending. |
 | **Scene Editor** | Saved image/text/camera scenes, position/size/opacity and layer order, camera-only preview and live scene switching; used by recording, replay and streaming. Physical webcam validation pending. |
@@ -50,7 +52,7 @@ Actual Redline interface from the development build.
 | **Hotkeys** | Configurable in-app recording, metrics logging and navigation shortcuts with conflict checks and repeat suppression. |
 | **Appearance** | Dark/light appearance, Greek/English core interface and Redline tray branding. |
 
-Service account/chat integration, advanced color adjustments and additional feature parity are under development. See the [streaming implementation](docs/STREAMING.md), [recording, gaming and hotkeys implementation](docs/RECORDING-AND-GAMING.md), [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
+Service account/chat integration, advanced color adjustments and additional feature parity are under development. See the [audio mixer guide](docs/AUDIO-MIXER.md), [streaming implementation](docs/STREAMING.md), [recording, gaming and hotkeys implementation](docs/RECORDING-AND-GAMING.md), [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
 
 ### Download Alpha 2 (native package)
 

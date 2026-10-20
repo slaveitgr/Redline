@@ -17,7 +17,7 @@ Item {
  function shade(c){return redlineAppearance.color(c,redlineAppearance.revision)}
  function preset(value){store.write("stream.profile",value);if(value==="Custom")return;var p=value==="Low"?["720p",30,3]:value==="Medium"?["720p",60,5]:value==="High"?["1080p",30,6]:["1080p",60,10];store.write("stream.resolution",p[0]);store.write("stream.fps",p[1]);store.write("stream.bitrate",p[2])}
  function verify(){var old=[store.read("stream.profile","High"),store.read("stream.resolution","1080p"),store.read("stream.fps",30),store.read("stream.bitrate",6)];preset("Low");var valid=store.read("stream.resolution","")==="720p" && Number(store.read("stream.bitrate",0))===3;store.write("stream.profile",old[0]);store.write("stream.resolution",old[1]);store.write("stream.fps",old[2]);store.write("stream.bitrate",old[3]);return valid && server.text.length===0 && streamKey.text.length===0}
- function goLive(){captureBackend.start({scene:page.store.captureScene(),stream:true,archive:page.archive,server:server.text.trim(),key:streamKey.text,codec:"h264",resolution:page.resolution,fps:page.fps,bitrate:page.bitrate,audioBitrate:page.audioBitrate,systemAudio:page.systemAudio,microphone:page.microphone});streamKey.clear()}
+ function goLive(){captureBackend.start({scene:page.store.captureScene(),audioConfig:page.store.captureAudio(),stream:true,archive:page.archive,server:server.text.trim(),key:streamKey.text,codec:"h264",resolution:page.resolution,fps:page.fps,bitrate:page.bitrate,audioBitrate:page.audioBitrate,systemAudio:page.systemAudio,microphone:page.microphone});streamKey.clear()}
  ColumnLayout {
   anchors.fill:parent;anchors.margins:18;spacing:14
   Label {text:"Live Stream";font.pixelSize:22;color:page.shade("#eee")}
@@ -32,9 +32,10 @@ Item {
       RedlineButton {text:"Chat";accent:page.chat;Layout.fillWidth:true;onClicked:page.chat=true}
      }
      ScrollView {
+      id:streamScroll
       Layout.fillWidth:true;Layout.fillHeight:true;contentWidth:availableWidth;clip:true
       ColumnLayout {
-       width:parent.width;spacing:12
+       width:streamScroll.availableWidth;spacing:12
        Label {visible:page.chat;text:"Chat requires a service account integration. Custom RTMP does not provide chat or viewer counts.";color:page.shade("#aaa");wrapMode:Text.WordWrap;Layout.fillWidth:true;Layout.margins:14}
        ColumnLayout {
         visible:!page.chat;Layout.fillWidth:true;Layout.margins:14;spacing:12
@@ -50,8 +51,7 @@ Item {
         RedlineSettingRow {title:"Video Bit Rate (Mb/s)";kind:"choice";choices:["2","3","4","5","6","8","10","12","16","24"];currentValue:String(page.bitrate);supported:!captureBackend.active;onRequested:value=>{page.store.write("stream.profile","Custom");page.store.write("stream.bitrate",Number(value))}}
         RedlineSettingRow {title:"Audio Bit Rate (kb/s)";kind:"choice";choices:["96","128","160","192","256","320"];currentValue:String(page.audioBitrate);supported:!captureBackend.active;onRequested:value=>page.store.write("stream.audioBitrate",Number(value))}
         RedlineSettingRow {title:"Archive Stream";kind:"switch";currentValue:page.archive;supported:!captureBackend.active;description:"Save an MP4 copy in Media. Use Stop Streaming to finish the file.";onRequested:value=>page.store.write("stream.archive",value)}
-        CheckBox {text:"System audio";checked:page.systemAudio;enabled:captureBackend.audioSupported && !captureBackend.active;onToggled:page.store.write("stream.audio",checked)}
-        CheckBox {text:"Microphone";checked:page.microphone;enabled:captureBackend.audioSupported && !captureBackend.active;onToggled:page.store.write("stream.microphone",checked)}
+        RedlineAudioMixer {store:page.store;systemKey:"stream.audio";microphoneKey:"stream.microphone";systemEnabled:page.systemAudio;microphoneEnabled:page.microphone}
         Label {text:"H.264 / AAC · software encoding";color:page.shade("#999")}
        }
       }

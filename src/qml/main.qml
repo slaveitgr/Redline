@@ -37,6 +37,7 @@ ApplicationWindow {
   }
   function globalRead(name,fallback){try{var value=JSON.parse(settings.getValue("UiV6/"+name,JSON.stringify(fallback)));return value===null?fallback:value}catch(e){return fallback}}
   function read(name, fallback) {var rev=revision;if(name.indexOf("launch.")===0 && appWindow.selectedGame)fallback=globalRead(name,fallback);try {var value=JSON.parse(settings.getValue("UiV6/"+key(name),JSON.stringify(fallback)));return value===null?fallback:value} catch(e){return fallback}}
+  function captureAudio(){return {systemDevice:read("audio.systemDevice",""),microphoneDevice:read("audio.microphoneDevice",""),systemVolume:Number(read("audio.systemVolume",100))/100,microphoneVolume:Number(read("audio.microphoneVolume",100))/100,systemMute:read("audio.systemMute",false),microphoneMute:read("audio.microphoneMute",false)}}
   function captureScene(){if(!read("scene.enabled",false))return {};var scenes=read("scene.list",[]);var selected=read("scene.selected","");for(var i=0;i<scenes.length;i++)if(scenes[i].id===selected)return scenes[i];return scenes.length?scenes[0]:{}}
   function clearLaunchOverrides(){if(!appWindow.selectedGame)return;var keys=["launch.gamemode","launch.gamescope","launch.fps","launch.renderSize","launch.outputSize","launch.scaler","launch.filter"];for(var i=0;i<keys.length;i++)settings.setValue("UiV6/"+key(keys[i]),"null");revision++}
   function write(name,value) {settings.setValue("UiV6/"+key(name),JSON.stringify(value));revision++}

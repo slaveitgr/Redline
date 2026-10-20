@@ -190,8 +190,91 @@ def camera_preview_pipeline(config,synthetic=False,on_preview=None):
     return pipeline
 
 
+def audio_devices():
+    """Enumerate PulseAudio/PipeWire-Pulse metadata; never start a source."""
+    provider = Gst.DeviceProviderFactory.get_by_name('pulsedeviceprovider')
+    if provider is None or not provider.start():
+        raise ValueError('Audio server is unavailable. Check PulseAudio or PipeWire-Pulse.')
+    result=[]
+    try:
+        for device in provider.get_devices():
+            if device.get_device_class() != 'Audio/Source': continue
+            source=device.create_element(None)
+            name=source.get_property('device') if source else None
+            props=device.get_properties()
+            monitor=bool(props and props.has_field('device.class') and props.get_value('device.class')=='monitor')
+            if name:
+                result.append({'id':name,'label':device.get_display_name(),'kind':'system' if monitor or name.endswith('.monitor') else 'microphone'})
+    finally: provider.stop()
+    return result
+
+
+def audio_settings(config=None):
+    config=config or {}
+    result={}
+    for kind in ('system','microphone'):
+        device=config.get(kind+'Device','')
+        volume=float(config.get(kind+'Volume',1.0))
+        mute=config.get(kind+'Mute',False)
+        if not isinstance(device,str) or len(device)>512 or any(ord(c)<32 for c in device) or not math.isfinite(volume) or not 0<=volume<=1 or not isinstance(mute,bool):
+            raise ValueError('Invalid audio settings.')
+        result.update({kind+'Device':device,kind+'Volume':volume,kind+'Mute':mute})
+    return result
+
+
+def validate_audio_devices(config, system, microphone, devices=None):
+    devices=audio_devices() if devices is None else devices
+    for kind,enabled in (('system',system),('microphone',microphone)):
+        selected=config[kind+'Device']
+        if enabled and selected and not any(d['id']==selected and d['kind']==kind for d in devices):
+            raise ValueError('Selected '+kind+' device is unavailable. Refresh devices and select it again. Capture was not started.')
+
+
+def add_audio_inputs(pipeline, system, microphone, config=None, synthetic=False, meters=False):
+    config=audio_settings(config)
+    def element(factory,name=None):
+        e=Gst.ElementFactory.make(factory,name)
+        if e is None: raise RuntimeError('Missing audio plugin: '+factory)
+        pipeline.add(e);return e
+    mixer=element('audiomixer','audio-mixer')
+    for kind,enabled in (('system',system),('microphone',microphone)):
+        if not enabled: continue
+        source=element('audiotestsrc' if synthetic else 'pulsesrc',kind+'-audio')
+        if synthetic:
+            source.set_property('num-buffers',45);source.set_property('freq',440.0 if kind=='system' else 880.0)
+        else:
+            selected=config[kind+'Device'] or ('@DEFAULT_MONITOR@' if kind=='system' else '@DEFAULT_SOURCE@')
+            source.set_property('device',selected)
+            source.set_property('stream-properties',Gst.Structure.new_from_string('props,media.role=(string)Production'))
+        volume=element('volume',kind+'-volume');volume.set_property('volume',config[kind+'Volume']);volume.set_property('mute',config[kind+'Mute'])
+        caps=element('capsfilter');caps.set_property('caps',Gst.Caps.from_string('audio/x-raw,rate=48000,channels=2'))
+        chain=[source,element('audioconvert'),element('audioresample'),caps,volume]
+        if meters:
+            level=element('level',kind+'-level');level.set_property('interval',Gst.SECOND//5);chain.append(level)
+        chain += [element('queue'),mixer]
+        for left,right in zip(chain,chain[1:]):
+            if not left.link(right): raise RuntimeError('Could not connect audio inputs.')
+    return mixer
+
+
+def audio_preview_pipeline(system,microphone,config=None,synthetic=False):
+    if not system and not microphone: raise ValueError('Enable system audio or microphone before testing.')
+    pipeline=Gst.Pipeline.new('redline-audio-test')
+    mixer=add_audio_inputs(pipeline,system,microphone,config,synthetic,True)
+    sink=Gst.ElementFactory.make('fakesink','audio-test-sink');sink.set_property('sync',False);pipeline.add(sink);mixer.link(sink)
+    return pipeline
+
+
+def apply_audio(pipeline,config):
+    config=audio_settings(config)
+    for kind in ('system','microphone'):
+        volume=pipeline.get_by_name(kind+'-volume')
+        if volume:
+            volume.set_property('volume',config[kind+'Volume']);volume.set_property('mute',config[kind+'Mute'])
+
+
 def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=False, serial=None,
-                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False, stream=None, audio_bitrate=128, archive=False, preview=False, on_preview=None, overlay_file=None, camera=None, synthetic_camera=False):
+                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False, stream=None, audio_bitrate=128, archive=False, preview=False, on_preview=None, overlay_file=None, camera=None, synthetic_camera=False, audio_config=None):
     if codec not in CODECS or resolution not in RESOLUTIONS or fps not in (30, 60) or not 2 <= bitrate <= 100:
         raise ValueError('Unsupported recording configuration.')
     if archive and (not stream or not output):
@@ -311,26 +394,8 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
         sink.set_property('location', str(output))
         sink.set_property('sync', False)
         link(video + [queue, mux, sink])
-    inputs = ([True] if audio else []) + ([False] if microphone else [])
-    if inputs:
-        mixer = element('audiomixer', 'audio-mixer')
-        for index, system in enumerate(inputs):
-            sound = element('audiotestsrc' if synthetic else 'pulsesrc', 'system-audio' if system else 'microphone')
-            if synthetic:
-                sound.set_property('num-buffers', 45)
-                sound.set_property('freq', 440.0 if system else 880.0)
-            elif system:
-                sound.set_property('device', '@DEFAULT_MONITOR@')
-            volume = element('volume')
-            volume.set_property('volume', 0.5 if len(inputs) == 2 else 1.0)
-            audio_caps = element('capsfilter')
-            audio_caps.set_property('caps', Gst.Caps.from_string('audio/x-raw,rate=48000,channels=2'))
-            chain = [sound, element('audioconvert'), element('audioresample'), audio_caps]
-            if preview:
-                level = element('level', 'system-level' if system else 'microphone-level')
-                level.set_property('interval', Gst.SECOND // 5)
-                chain.append(level)
-            link(chain + [volume, element('queue'), mixer])
+    if audio or microphone:
+        mixer = add_audio_inputs(pipeline,audio,microphone,audio_config,synthetic,preview)
         audio_encoder = element(profile['audio'])
         if codec == 'h264':
             audio_encoder.set_property('bitrate', audio_bitrate * 1000)
@@ -383,7 +448,12 @@ class Recorder:
             if len(command)>16384:
                 event('scene-rejected',message='Scene command is too large.');continue
             if command.startswith('{') and not self.stopping:
-                try:self.apply_scene(json.loads(command))
+                try:
+                    config=json.loads(command)
+                    if config.get('command')=='audio':
+                        if self.pipeline is None: raise ValueError('Audio is not ready.')
+                        apply_audio(self.pipeline,config);event('audio-applied')
+                    else:self.apply_scene(config)
                 except Exception as error:event('scene-rejected',message=str(error)[:200])
             elif command=='save-replay' and self.replay_dir and not self.stopping:self.save_replay()
             elif command=='stop':
@@ -449,7 +519,7 @@ class Recorder:
         handle, descriptors = self.connection.call_with_unix_fd_list_sync(BUS, PATH, IFACE, 'OpenPipeWireRemote', GLib.Variant('(oa{sv})', (self.session, {})), GLib.VariantType.new('(h)'), Gio.DBusCallFlags.NONE, 10000, None, None)
         self.fd = descriptors.get(handle.unpack()[0])
         # Prefer portal v6 stream serials; use legacy node IDs on older portals.
-        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir), stream=getattr(self.args,"stream_location",None), audio_bitrate=getattr(self.args,"audio_bitrate",128), archive=getattr(self.args,"archive",False), preview=getattr(self.args,"preview",False), overlay_file=getattr(self.args,"overlay_file",None), camera=getattr(self.args,"camera",None))
+        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir), stream=getattr(self.args,"stream_location",None), audio_bitrate=getattr(self.args,"audio_bitrate",128), archive=getattr(self.args,"archive",False), preview=getattr(self.args,"preview",False), overlay_file=getattr(self.args,"overlay_file",None), camera=getattr(self.args,"camera",None), audio_config=getattr(self.args,"audio_config",None))
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message', self.bus_message)
@@ -475,13 +545,15 @@ class Recorder:
             error, debug = message.parse_error()
             if not getattr(self.args, 'stream', False):
                 print(f"GStreamer {message.src.get_name()}: {error.message}; {debug}", file=sys.stderr, flush=True)
-            self.error('Stream connection or encoding failed. Check the server, key and network.' if getattr(self.args, 'stream', False) else error.message)
+            self.error('An audio device became unavailable. Capture stopped; reconnect it and select it again.' if message.src is not None and message.src.get_name() in ('system-audio','microphone-audio') else 'Stream connection or encoding failed. Check the server, key and network.' if getattr(self.args, 'stream', False) else error.message)
         elif message.type == Gst.MessageType.STATE_CHANGED and message.src == self.pipeline:
             old, new, pending = message.parse_state_changed()
             if new == Gst.State.PLAYING:
-                event('camera-preview' if getattr(self.args,'camera_preview',False) else 'streaming' if getattr(self.args,'stream',False) else 'recording', output=self.args.output)
+                event('audio-preview' if getattr(self.args,'audio_preview',False) else 'camera-preview' if getattr(self.args,'camera_preview',False) else 'streaming' if getattr(self.args,'stream',False) else 'recording', output=self.args.output)
         elif message.type == Gst.MessageType.EOS:
-            event('camera-stopped' if getattr(self.args,'camera_preview',False) else 'stream-stopped' if getattr(self.args,'stream',False) else 'buffer-stopped' if self.replay_dir else 'saved', output=self.args.output, archived=bool(getattr(self.args,'archive',False)))
+            if getattr(self,'audio_failure',None):
+                self.error(self.audio_failure);return
+            event('audio-stopped' if getattr(self.args,'audio_preview',False) else 'camera-stopped' if getattr(self.args,'camera_preview',False) else 'stream-stopped' if getattr(self.args,'stream',False) else 'buffer-stopped' if self.replay_dir else 'saved', output=self.args.output, archived=bool(getattr(self.args,'archive',False)))
             self.loop.quit()
 
     def save_replay(self):
@@ -549,9 +621,25 @@ class Recorder:
         self.error('Stream shutdown timed out.' if getattr(self.args,'stream',False) else 'Recording finalization timed out. The file may be incomplete.')
         return False
 
+    def check_audio_devices(self):
+        if self.stopping or self.failed:return False
+        config=getattr(self.args,'audio_config',{})
+        if not any(config.get(k+'Device') for k in ('system','microphone')):return False
+        try:validate_audio_devices(config,self.args.audio,self.args.microphone)
+        except Exception:
+            self.audio_failure='Selected audio device disconnected. Capture stopped; reconnect it and select it again.'
+            self.stop();return False
+        return True
+
     def run(self):
+        self.audio_failure=None
+        poll=GLib.timeout_add_seconds(2,self.check_audio_devices) if (getattr(self.args,'audio',False) or getattr(self.args,'microphone',False)) else None
         try:
-            if getattr(self.args,'camera_preview',False):
+            if getattr(self.args,'audio_preview',False):
+                self.pipeline=audio_preview_pipeline(self.args.audio,self.args.microphone,self.args.audio_config)
+                bus=self.pipeline.get_bus();bus.add_signal_watch();bus.connect('message',self.bus_message)
+                if self.pipeline.set_state(Gst.State.PLAYING)==Gst.StateChangeReturn.FAILURE:raise RuntimeError('Could not open audio test.')
+            elif getattr(self.args,'camera_preview',False):
                 self.pipeline=camera_preview_pipeline(self.args.camera)
                 bus=self.pipeline.get_bus();bus.add_signal_watch();bus.connect('message',self.bus_message)
                 if self.pipeline.set_state(Gst.State.PLAYING)==Gst.StateChangeReturn.FAILURE:raise RuntimeError('Could not open camera preview.')
@@ -563,6 +651,9 @@ class Recorder:
         except Exception as error:
             self.error('Stream setup failed.' if getattr(self.args,'stream',False) else str(error))
         finally:
+            if poll is not None:
+                source=GLib.MainContext.default().find_source_by_id(poll)
+                if source:source.destroy()
             if self.pipeline:
                 self.pipeline.set_state(Gst.State.NULL)
             if self.session and self.connection:
@@ -581,6 +672,9 @@ class Recorder:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--audio-devices',action='store_true')
+    parser.add_argument('--audio-file')
+    parser.add_argument('--audio-preview',action='store_true')
     parser.add_argument('--stream', action='store_true')
     parser.add_argument('--archive', action='store_true')
     parser.add_argument('--preview', action='store_true')
@@ -599,6 +693,10 @@ if __name__ == '__main__':
     parser.add_argument('--resolution', choices=list(RESOLUTIONS), default='native')
     args = parser.parse_args()
     os.umask(0o077)
+    if args.audio_devices:
+        try:event('audio-devices',devices=audio_devices())
+        except Exception as error:event('audio-devices',devices=[],message=str(error))
+        raise SystemExit(0)
     if args.check:
         required = ['pipewiresrc', 'videoconvert', 'videoscale', 'videorate', 'filesink']
         missing = [name for name in required if not Gst.ElementFactory.find(name)]
@@ -607,6 +705,13 @@ if __name__ == '__main__':
         raise SystemExit(bool(missing) or not codecs)
     if os.getenv('REDLINE_READ_ONLY') is not None:
         parser.error('Recording is disabled in UI preview.')
+    args.audio_config=audio_settings()
+    try:
+        if args.audio_file:args.audio_config=audio_settings(json.loads(Path(args.audio_file).read_text()[:8192]))
+        if args.audio or args.microphone:validate_audio_devices(args.audio_config,args.audio,args.microphone)
+    except Exception as error:
+        event('error',message=str(error));raise SystemExit(1)
+    if args.audio_preview:raise SystemExit(Recorder(args).run())
     args.camera=None
     if args.camera_file or args.camera_preview:
         try:
