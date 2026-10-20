@@ -1,7 +1,7 @@
 <p align="center"><img src="resources/icon/app_128.svg" width="96" alt="Redline"></p>
 <h1 align="center">REDLINE · Open-Source AMD Adrenalin Alternative for Linux</h1>
 <p align="center"><strong>Your GPU. Your Games. Your Control.</strong><br>An independent, open-source alternative to AMD Software: Adrenalin Edition for Linux.<br>Developed by <a href="https://slave.gr">Slave IT Solutions — Greece</a></p>
-<p align="center"><a href="#english">English</a> · <a href="#ελληνικά">Ελληνικά</a> · <a href="docs/PARITY-ROADMAP.md">Feature roadmap</a> · <a href="https://github.com/slaveitgr/Redline/issues">Report an issue</a></p>
+<p align="center"><a href="#english">English</a> · <a href="#ελληνικά">Ελληνικά</a> · <a href="docs/PARITY-ROADMAP.md">Feature roadmap</a> · <a href="docs/BRANDING.md">Brand & positioning</a> · <a href="https://github.com/slaveitgr/Redline/issues">Report an issue</a></p>
 
 ---
 

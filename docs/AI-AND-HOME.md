@@ -1,6 +1,6 @@
 # AI and Home integration
 
-> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition for Linux**. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
 
 Redline Chat is an original Qt UI using the documented Ollama API (`GET /api/tags`, `POST /api/chat`, non-streamed replies). Requests only occur on Refresh or Send, target 127.0.0.1:11434, bypass proxies and reject redirects. No installation, model pull, shell execution, or automatic system changes are implemented. Known cloud model names and remote metadata are excluded from the model picker. This is a local endpoint integration, not an independent audit of a user's Ollama configuration.
 

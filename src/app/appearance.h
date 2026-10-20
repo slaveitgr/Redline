@@ -43,7 +43,7 @@ class Appearance final : public QObject {
  Q_INVOKABLE QString text(QString input,int=0)const {
   if(!greek_){return reverse_.value(input,input);}
   if(translator_.words.contains(input))return translator_.words.value(input);
-  if(input.startsWith("AMD ") || input.startsWith("Intel") || input.startsWith("NVIDIA") || input.startsWith("Linux Graphics Edition") || input.startsWith("Steam "))return input;
+  if(input.startsWith("AMD ") || input.startsWith("Intel") || input.startsWith("NVIDIA") || input.startsWith("Steam "))return input;
   // Translate composed captions while keeping route keys and stored values English.
   for(const auto &key:keys_)if(key.size()>3 && input.contains(key)){input.replace(key,translator_.words.value(key));}
   return input;

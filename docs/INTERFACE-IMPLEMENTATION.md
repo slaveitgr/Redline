@@ -1,6 +1,6 @@
 # Interface implementation: first shared-shell pass
 
-> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition for Linux**. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
 
 This pass implements the shared shell using original Redline QML and SVG code. It is based on observed interface behavior and measured geometry, with Redline branding. Recovered AMD application sources and binary resources remain private research inputs.
 
