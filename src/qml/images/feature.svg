@@ -4,6 +4,7 @@
 <g fill="none" stroke="url(#red)"><path stroke-width="48" opacity=".18" d="M160 476 700-64M360 476 900-64"/><path stroke-width="6" d="M0 400 620-220M350 656 1150-144"/><path stroke-width="2" opacity=".5" d="M0 360 620-260M390 656 1190-144"/></g>
 <text x="544" y="216" text-anchor="middle" fill="#fff" font-family="sans-serif" font-size="84" font-weight="700" letter-spacing="9">REDLINE</text>
 <path fill="#ed003b" d="M389 244h310v5H389z"/>
-<text x="544" y="295" text-anchor="middle" fill="#b6b3bd" font-family="sans-serif" font-size="22" letter-spacing="3">LINUX GRAPHICS EDITION</text>
+<text x="544" y="295" text-anchor="middle" fill="#b6b3bd" font-family="sans-serif" font-size="22" letter-spacing="3">AMD ADRENALIN</text>
+<text x="544" y="330" text-anchor="middle" fill="#b6b3bd" font-family="sans-serif" font-size="20" letter-spacing="1">OPEN SOURCE ALTERNATIVE FOR LINUX</text>
 <text x="544" y="382" text-anchor="middle" fill="#807d88" font-family="sans-serif" font-size="15">SLAVE IT SOLUTIONS</text>
 </svg>
