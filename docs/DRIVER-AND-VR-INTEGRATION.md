@@ -1,5 +1,7 @@
 # Driver compatibility and VR integration
 
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition for Linux**. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+
 ## Windows package reference findings
 
 Focused static analysis of the privately recovered Settings/System, Dashboard/DriverUpdate, Settings/ReliveVR, Settings/VrDevicePairPopup and Settings/VrStreamingSetting components confirms a separate driver/update surface and VR device, pairing, SteamVR integration, headset profile, controller, bitrate and UDP/TCP settings. These are feature-gated Windows model bindings; their presence does not establish Linux support. No recovered AMD QML, binary assets or native implementation is distributed.

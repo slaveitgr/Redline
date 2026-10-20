@@ -1,5 +1,7 @@
 # Linux builds
 
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition for Linux**. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+
 The first native package target is **Ubuntu 26.10 amd64**. The development `.deb` has completed install/remove/reinstall/purge checks in a clean Ubuntu container. Hardware authorization, real GPU writes and desktop-session integration still require interactive testing on each target.
 
 [Download Alpha 1](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.1) includes the locally validated Ubuntu `.deb`, AppImage Preview and SHA256SUMS. Release filenames use `-alpha1`; the Debian package metadata uses `~alpha1` for correct version ordering.

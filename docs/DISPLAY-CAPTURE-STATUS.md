@@ -1,5 +1,7 @@
 # Display and capture support
 
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition for Linux**. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+
 ## GNOME desktop display controls
 
 Redline queries the session's `org.gnome.Mutter.DisplayConfig` service. The Display page offers the connected display's advertised resolution/refresh modes, supported scale factors, matching fixed/variable refresh modes (Adaptive Sync), and compositor color modes (standard SDR, native SDR or HDR where exposed).
