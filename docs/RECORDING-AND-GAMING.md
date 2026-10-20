@@ -4,7 +4,7 @@
 
 The native recording page now exposes installed software encoder profiles: VP8/WebM, VP9/WebM and H.264/MP4. H.264 requires x264, h264parse, AAC and MP4 muxer plugins; unavailable profiles are omitted. The native Debian package recommends the optional GStreamer codec packages. Minimal installations can still use the available WebM profiles.
 
-Recording supports 30/60 fps, a 2–100 Mb/s target bitrate, and native, 720p or 1080p output. Scaling preserves aspect ratio with borders. System audio, the default microphone, or both can be selected explicitly. When mixing both, each input uses half gain to reduce clipping; the inputs are converted to 48 kHz stereo and encoded as one mixed track. Separate microphone tracks, device selection, GPU encoding and an embedded live preview remain pending.
+Recording supports 30/60 fps, a 2–100 Mb/s target bitrate, and native, 720p or 1080p output. Scaling preserves aspect ratio with borders. System audio, the default microphone, or both can be selected explicitly. When mixing both, each input uses half gain to reduce clipping; the inputs are converted to 48 kHz stereo and encoded as one mixed track. Separate microphone tracks, device selection and GPU encoding remain pending. A low-rate in-memory live preview and audio activity meters now share the capture pipeline.
 
 The screen/window is chosen through the desktop's ScreenCast portal after Start. Microphone/system-audio inputs are never opened on startup, during capability detection or in automated tests. Both the native interface and the helper reject recording in Preview mode. Stop requests EOS so the container can finalize; timeout and process errors are reported. Saved WebM/MP4 files appear in Media.
 

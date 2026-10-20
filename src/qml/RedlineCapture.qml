@@ -61,11 +61,16 @@ Item {
    }
    Rectangle {
     Layout.fillWidth:true;Layout.fillHeight:true;color:page.shade("#17171b")
-    ColumnLayout {anchors.centerIn:parent;width:parent.width-60;spacing:20
-     Label {text:captureBackend.state==="recording"?"●":"▷";color:captureBackend.state==="recording"?"#dd0031":page.shade("#777");font.pixelSize:54;Layout.alignment:Qt.AlignHCenter}
+    ColumnLayout {anchors.centerIn:parent;width:parent.width-60;spacing:12
+     Label {visible:!captureBackend.previewAvailable;text:captureBackend.state==="recording"?"●":"▷";color:captureBackend.state==="recording"?"#dd0031":page.shade("#777");font.pixelSize:54;Layout.alignment:Qt.AlignHCenter}
      Label {text:page.tr(captureBackend.state==="recording"?"Recording in progress.":captureBackend.state==="selecting"?"Choose a screen or window in the system dialog.":captureBackend.state==="stopping"?"Saving recording…":"Ready to record");wrapMode:Text.WordWrap;color:page.shade("#ddd");Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter;font.pixelSize:18}
      Label {text:Math.floor(captureBackend.seconds/60).toString().padStart(2,"0")+":"+(captureBackend.seconds%60).toString().padStart(2,"0");font.pixelSize:32;color:page.shade("#ddd");Layout.alignment:Qt.AlignHCenter}
-     Label {text:page.tr("The selected screen is recorded directly. An in-app live preview is not implemented.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter}
+     RedlineCapturePreview {visible:captureBackend.previewAvailable;Layout.fillWidth:true;Layout.preferredHeight:Math.min(240,page.height*0.28)}
+     Label {visible:!captureBackend.previewAvailable;text:page.tr("Preview appears after selecting a screen or window.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter}
+     Label {text:"System audio";color:page.shade("#999")}
+     ProgressBar {from:0;to:1;value:captureBackend.systemLevel;Layout.fillWidth:true}
+     Label {text:"Microphone";color:page.shade("#999")}
+     ProgressBar {from:0;to:1;value:captureBackend.microphoneLevel;Layout.fillWidth:true}
     }
    }
   }

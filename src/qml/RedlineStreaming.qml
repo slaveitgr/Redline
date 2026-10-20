@@ -64,13 +64,18 @@ Item {
     ColumnLayout {
      anchors.fill:parent;anchors.margins:18
      Label {text:"Stream Preview";font.pixelSize:16;color:page.shade("#ddd")}
-     Item {Layout.fillHeight:true}
+     RedlineCapturePreview {visible:captureBackend.previewAvailable && captureBackend.streaming;Layout.fillWidth:true;Layout.fillHeight:true}
+     Item {visible:!captureBackend.previewAvailable;Layout.fillHeight:true}
      Label {text:captureBackend.active && captureBackend.streaming?(captureBackend.state==="streaming"?"● SENDING":"CONNECTING / SELECTING SOURCE"):"OFFLINE";font.pixelSize:25;color:captureBackend.active && captureBackend.streaming?"#ed003b":page.shade("#999");Layout.alignment:Qt.AlignHCenter}
      Label {text:captureBackend.active && captureBackend.streaming?Math.floor(captureBackend.seconds/60).toString().padStart(2,"0")+":"+(captureBackend.seconds%60).toString().padStart(2,"0"):"";font.pixelSize:30;color:page.shade("#ddd");Layout.alignment:Qt.AlignHCenter}
-     Label {text:"Select a screen or window in the system dialog after Go Live. This page does not display a live video preview yet. Verify delivery and audience in your service dashboard.";color:page.shade("#999");wrapMode:Text.WordWrap;horizontalAlignment:Text.AlignHCenter;Layout.fillWidth:true}
+     Label {text:"Select a screen or window in the system dialog after Go Live. Verify delivery and audience in your service dashboard.";color:page.shade("#999");wrapMode:Text.WordWrap;horizontalAlignment:Text.AlignHCenter;Layout.fillWidth:true}
+     Label {text:"System audio";color:page.shade("#999")}
+     ProgressBar {from:0;to:1;value:captureBackend.systemLevel;Layout.fillWidth:true}
+     Label {text:"Microphone";color:page.shade("#999")}
+     ProgressBar {from:0;to:1;value:captureBackend.microphoneLevel;Layout.fillWidth:true}
      Label {visible:!captureBackend.streamingSupported;text:"Install the H.264, AAC and RTMP GStreamer plugins to enable streaming.";color:"#dc9b63";wrapMode:Text.WordWrap;Layout.fillWidth:true}
      Label {visible:redlineReadOnly;text:"Streaming is disabled in Preview. Open normal Redline.";color:page.shade("#999");wrapMode:Text.WordWrap;Layout.fillWidth:true}
-     Item {Layout.fillHeight:true}
+     Item {visible:!captureBackend.previewAvailable;Layout.fillHeight:true}
      Label {text:captureBackend.message;color:page.shade("#bbb");wrapMode:Text.WordWrap;Layout.fillWidth:true}
     }
    }

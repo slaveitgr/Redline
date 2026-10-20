@@ -209,7 +209,9 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
   auto integration = new SystemIntegration(&qmlEngine);
   auto installer = new VrInstaller(&qmlEngine);
   QObject::connect(installer, &VrInstaller::installed, integration, &SystemIntegration::refresh);
-  qmlEngine.rootContext()->setContextProperty("captureBackend", new CaptureBackend(&qmlEngine));
+  auto previewFrame=std::make_shared<CapturePreviewFrame>();
+  qmlEngine.addImageProvider("capture",new CapturePreviewProvider(previewFrame));
+  qmlEngine.rootContext()->setContextProperty("captureBackend", new CaptureBackend(&qmlEngine,previewFrame));
   qmlEngine.rootContext()->setContextProperty("shortcutSupport", new ShortcutSupport(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("displayBackend", new DisplayBackend(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("vrInstaller", installer);

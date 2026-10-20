@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit portal-selected local recording; never captures on startup."""
 import argparse
+import base64
 import json
 import os
 from pathlib import Path
@@ -23,8 +24,12 @@ BUS = 'org.freedesktop.portal.Desktop'
 PATH = '/org/freedesktop/portal/desktop'
 IFACE = 'org.freedesktop.portal.ScreenCast'
 
+EVENT_LOCK = threading.Lock()
+
 def event(state, **data):
-    print(json.dumps({'state': state, **data}), flush=True)
+    with EVENT_LOCK:
+        sys.stdout.write(json.dumps({'state': state, **data}) + '\n')
+        sys.stdout.flush()
 
 CODECS = {
     'vp8': dict(label='VP8 / WebM', extension='webm', video='vp8enc', audio='vorbisenc', mux='webmmux'),
@@ -65,7 +70,7 @@ def streaming_supported():
 
 
 def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=False, serial=None,
-                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False, stream=None, audio_bitrate=128, archive=False):
+                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False, stream=None, audio_bitrate=128, archive=False, preview=False, on_preview=None):
     if codec not in CODECS or resolution not in RESOLUTIONS or fps not in (30, 60) or not 2 <= bitrate <= 100:
         raise ValueError('Unsupported recording configuration.')
     if archive and (not stream or not output):
@@ -111,7 +116,41 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
         encoder.set_property('bitrate', bitrate * 1000)
         Gst.util_set_object_arg(encoder, 'speed-preset', 'ultrafast')
         Gst.util_set_object_arg(encoder, 'tune', 'zerolatency')
-    video = [source, convert, scale, rate, caps, encoder]
+    video_source = source
+    if preview:
+        video_source = element('tee', 'preview-fork')
+        link([source, video_source])
+        branch = element('queue', 'preview-queue')
+        branch.set_property('leaky', 2)
+        branch.set_property('max-size-buffers', 1)
+        preview_scale = element('videoscale')
+        preview_scale.set_property('add-borders', True)
+        preview_rate = element('videorate')
+        preview_rate.set_property('drop-only', True)
+        preview_caps = element('capsfilter')
+        preview_caps.set_property('caps', Gst.Caps.from_string('video/x-raw,width=640,height=360,framerate=5/1,pixel-aspect-ratio=1/1'))
+        jpeg = element('jpegenc')
+        jpeg.set_property('quality', 60)
+        sink = element('appsink', 'preview')
+        sink.set_property('emit-signals', True)
+        sink.set_property('max-buffers', 1)
+        sink.set_property('drop', True)
+        sink.set_property('sync', False)
+        def frame(sink):
+            sample = sink.emit('pull-sample')
+            if sample is None:
+                return Gst.FlowReturn.OK
+            buffer = sample.get_buffer()
+            if buffer.get_size() <= 200000:
+                data = buffer.extract_dup(0, buffer.get_size())
+                if on_preview:
+                    on_preview(data)
+                else:
+                    event('preview', jpeg=base64.b64encode(data).decode('ascii'))
+            return Gst.FlowReturn.OK
+        sink.connect('new-sample', frame)
+        link([video_source, branch, element('videoconvert'), preview_scale, preview_rate, preview_caps, jpeg, sink])
+    video = [video_source] + ([element('queue')] if preview else []) + [convert, scale, rate, caps, encoder]
     if codec == 'h264':
         video.append(element('h264parse'))
     if stream:
@@ -164,7 +203,12 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
             volume.set_property('volume', 0.5 if len(inputs) == 2 else 1.0)
             audio_caps = element('capsfilter')
             audio_caps.set_property('caps', Gst.Caps.from_string('audio/x-raw,rate=48000,channels=2'))
-            link([sound, element('audioconvert'), element('audioresample'), audio_caps, volume, element('queue'), mixer])
+            chain = [sound, element('audioconvert'), element('audioresample'), audio_caps]
+            if preview:
+                level = element('level', 'system-level' if system else 'microphone-level')
+                level.set_property('interval', Gst.SECOND // 5)
+                chain.append(level)
+            link(chain + [volume, element('queue'), mixer])
         audio_encoder = element(profile['audio'])
         if codec == 'h264':
             audio_encoder.set_property('bitrate', audio_bitrate * 1000)
@@ -255,7 +299,7 @@ class Recorder:
         handle, descriptors = self.connection.call_with_unix_fd_list_sync(BUS, PATH, IFACE, 'OpenPipeWireRemote', GLib.Variant('(oa{sv})', (self.session, {})), GLib.VariantType.new('(h)'), Gio.DBusCallFlags.NONE, 10000, None, None)
         self.fd = descriptors.get(handle.unpack()[0])
         # Prefer portal v6 stream serials; use legacy node IDs on older portals.
-        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir), stream=getattr(self.args,"stream_location",None), audio_bitrate=getattr(self.args,"audio_bitrate",128), archive=getattr(self.args,"archive",False))
+        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir), stream=getattr(self.args,"stream_location",None), audio_bitrate=getattr(self.args,"audio_bitrate",128), archive=getattr(self.args,"archive",False), preview=getattr(self.args,"preview",False))
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message', self.bus_message)
@@ -263,6 +307,13 @@ class Recorder:
             raise RuntimeError('Could not start the recording pipeline.')
 
     def bus_message(self, bus, message):
+        if message.type == Gst.MessageType.ELEMENT:
+            structure = message.get_structure()
+            if structure and structure.get_name() == 'level':
+                peaks = structure.get_value('peak')
+                peak = max(peaks) if peaks else -60
+                event('audio-level', source=message.src.get_name(), value=max(0.0, min(1.0, (peak + 60) / 60)))
+                return
         if message.type == Gst.MessageType.ELEMENT and self.replay_dir:
             structure = message.get_structure()
             if structure and structure.get_name() == 'splitmuxsink-fragment-closed':
@@ -377,6 +428,7 @@ if __name__ == '__main__':
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--stream', action='store_true')
     parser.add_argument('--archive', action='store_true')
+    parser.add_argument('--preview', action='store_true')
     parser.add_argument('--output')
     parser.add_argument('--fps', type=int, choices=[30, 60], default=30)
     parser.add_argument('--audio', action='store_true')
@@ -391,7 +443,7 @@ if __name__ == '__main__':
         required = ['pipewiresrc', 'videoconvert', 'videoscale', 'videorate', 'filesink']
         missing = [name for name in required if not Gst.ElementFactory.find(name)]
         codecs = available_codecs()
-        event('capabilities', streaming=streaming_supported(), supported=not missing and bool(codecs), codecs=codecs, missing=missing, replay=bool(shutil.which('ffmpeg') and Gst.ElementFactory.find('splitmuxsink')), audio=all(Gst.ElementFactory.find(n) for n in ['pulsesrc', 'audiomixer', 'audioconvert', 'audioresample', 'volume']))
+        event('capabilities', preview=all(Gst.ElementFactory.find(n) for n in ('tee','queue','jpegenc','appsink','level')), streaming=streaming_supported(), supported=not missing and bool(codecs), codecs=codecs, missing=missing, replay=bool(shutil.which('ffmpeg') and Gst.ElementFactory.find('splitmuxsink')), audio=all(Gst.ElementFactory.find(n) for n in ['pulsesrc', 'audiomixer', 'audioconvert', 'audioresample', 'volume']))
         raise SystemExit(bool(missing) or not codecs)
     if os.getenv('REDLINE_READ_ONLY') is not None:
         parser.error('Recording is disabled in UI preview.')
