@@ -51,7 +51,7 @@ Service account/chat integration, live streaming preview, advanced color adjustm
 
 ### Download Alpha 2 (native package)
 
-[**Download Redline 0.9.0 Alpha 5**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.5)
+[**Download Redline 0.9.0 Alpha 6**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.6)
 
 - **Ubuntu 26.10 amd64:** native `.deb` with hardware services and dependency installation through APT.
 - [**AppImage Preview x86_64 (Alpha 3)**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.3): try the interface and monitoring without installing hardware services. Built on Ubuntu 26.10; older distribution compatibility is not yet verified.
@@ -116,7 +116,7 @@ AMD Software: Adrenalin Edition is the interface reference. Redline is an indepe
 
 ### Λήψη
 
-[**Κατέβασε το Redline 0.9.0 Alpha 5**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.5): `.deb` για Ubuntu 26.10 amd64 και checksums. Το AppImage Preview βρίσκεται στην Alpha 3. Τα builds Debian ελέγχονται χωριστά στο GitHub Actions.
+[**Κατέβασε το Redline 0.9.0 Alpha 6**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.6): `.deb` για Ubuntu 26.10 amd64 και checksums. Το AppImage Preview βρίσκεται στην Alpha 3. Τα builds Debian ελέγχονται χωριστά στο GitHub Actions.
 
 ### Τι προσφέρει σήμερα
 
