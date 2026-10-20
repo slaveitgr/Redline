@@ -1,5 +1,7 @@
 # Redline interface and functionality parity
 
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+
 The target is a complete Adrenalin-style Linux application, including navigation, page layouts, dialogs and working controls. A matching interface does not imply that proprietary Windows driver functionality is available on Linux. 
 
 ## Coverage and acceptance criteria

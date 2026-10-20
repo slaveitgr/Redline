@@ -1,5 +1,7 @@
 # Snap Settings and application reset
 
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+
 Settings > System now implements the Adrenalin-style Snap Settings import/export action and a confirmed, scoped application reset. This is original Redline code using validated JSON; it does not import AMD's binary settings format.
 
 A version-1 redline-ui-snapshot contains only supported UI preferences and serialized UiV6 settings: appearance, favorites, overlay, launch preferences and local backend choices. CoreCtrl hardware profiles, LACT GPU configuration, driver/service/repository configuration, Steam launch files, credentials and external application files are outside its scope. Import replaces the scoped application key set, defaulting absent preferences. Reset clears UiV6 and restores supported application defaults. Neither operation applies GPU/CPU profiles or edits Steam options.

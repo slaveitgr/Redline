@@ -1,5 +1,7 @@
 # Recording, screenshots, graphics defaults and hotkeys
 
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+
 ## Recording
 
 The native recording page now exposes installed software encoder profiles: VP8/WebM, VP9/WebM and H.264/MP4. H.264 requires x264, h264parse, AAC and MP4 muxer plugins; unavailable profiles are omitted. The native Debian package recommends the optional GStreamer codec packages. Minimal installations can still use the available WebM profiles.

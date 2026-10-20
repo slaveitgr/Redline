@@ -1,5 +1,7 @@
 # Scene Editor — first functional implementation
 
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+
 The editor follows the observed source/scene/property structure of the supplied Windows reference. This implementation supports up to 20 locally saved scenes, creation/deletion/renaming/selection, an image layer and a text layer over the portal-selected screen/window. A master Use scene at capture start switch is off by default. It applies to Record, Replay, Custom Live Stream and its archive.
 
 Select an image or text source, then click the canvas or use X/Y controls to position it. Image width, text size, opacity and text-above-image order are editable. PNG/JPEG inputs are limited to 20 MiB and 16 megapixels; invalid images produce an editor/capture error. Text is limited to 200 characters. The 1280×720 transparent design canvas is scaled to the selected output. Use 720p/1080p for matching 16:9 proportions; other aspect ratios stretch the design. The screen base is represented by a labelled placeholder until capture starts.

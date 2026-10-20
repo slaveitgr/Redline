@@ -1,5 +1,7 @@
 # Custom live streaming
 
+> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+
 ## Original application reference
 
 Static inspection of the user-provided Windows package identified separate Streaming, StreamingControlPanel, StreamingSidebar and DvrSettingsStreaming components. Observed controls include Controls/Chat, Stream Preview, offline/online status, custom URL/key, account/server selection, title/description/audience, profiles (Low/Medium/High/Ultra/Custom/Adaptive), resolution, FPS, video/audio bitrates, enhanced filtering and Archive Stream. These observations inform the Redline layout and feature list; account-specific availability has not been dynamically validated.
