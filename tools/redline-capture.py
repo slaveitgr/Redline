@@ -70,7 +70,7 @@ def streaming_supported():
 
 
 def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=False, serial=None,
-                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False, stream=None, audio_bitrate=128, archive=False, preview=False, on_preview=None):
+                  codec='vp8', bitrate=8, resolution='native', microphone=False, replay=False, stream=None, audio_bitrate=128, archive=False, preview=False, on_preview=None, overlay_file=None):
     if codec not in CODECS or resolution not in RESOLUTIONS or fps not in (30, 60) or not 2 <= bitrate <= 100:
         raise ValueError('Unsupported recording configuration.')
     if archive and (not stream or not output):
@@ -116,10 +116,23 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
         encoder.set_property('bitrate', bitrate * 1000)
         Gst.util_set_object_arg(encoder, 'speed-preset', 'ultrafast')
         Gst.util_set_object_arg(encoder, 'tune', 'zerolatency')
-    video_source = source
+    base_video = [source, convert, scale, rate, caps]
+    if overlay_file:
+        overlay = element('gdkpixbufoverlay', 'scene-overlay')
+        overlay.set_property('location', str(overlay_file))
+        def resize(pad, unused):
+            current = pad.get_current_caps()
+            if current:
+                shape = current.get_structure(0)
+                overlay.set_property('overlay-width', shape.get_value('width'))
+                overlay.set_property('overlay-height', shape.get_value('height'))
+        caps.get_static_pad('src').connect('notify::caps', resize)
+        base_video += [element('videoconvert'), overlay, element('videoconvert')]
+    link(base_video)
+    video_source = base_video[-1]
     if preview:
         video_source = element('tee', 'preview-fork')
-        link([source, video_source])
+        link([base_video[-1], video_source])
         branch = element('queue', 'preview-queue')
         branch.set_property('leaky', 2)
         branch.set_property('max-size-buffers', 1)
@@ -150,7 +163,7 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
             return Gst.FlowReturn.OK
         sink.connect('new-sample', frame)
         link([video_source, branch, element('videoconvert'), preview_scale, preview_rate, preview_caps, jpeg, sink])
-    video = [video_source] + ([element('queue')] if preview else []) + [convert, scale, rate, caps, encoder]
+    video = [video_source] + ([element('queue')] if preview else []) + [encoder]
     if codec == 'h264':
         video.append(element('h264parse'))
     if stream:
@@ -299,7 +312,7 @@ class Recorder:
         handle, descriptors = self.connection.call_with_unix_fd_list_sync(BUS, PATH, IFACE, 'OpenPipeWireRemote', GLib.Variant('(oa{sv})', (self.session, {})), GLib.VariantType.new('(h)'), Gio.DBusCallFlags.NONE, 10000, None, None)
         self.fd = descriptors.get(handle.unpack()[0])
         # Prefer portal v6 stream serials; use legacy node IDs on older portals.
-        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir), stream=getattr(self.args,"stream_location",None), audio_bitrate=getattr(self.args,"audio_bitrate",128), archive=getattr(self.args,"archive",False), preview=getattr(self.args,"preview",False))
+        self.pipeline = make_pipeline(str(Path(self.replay_dir.name) / "chunk-%06d.webm") if self.replay_dir else self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone, replay=bool(self.replay_dir), stream=getattr(self.args,"stream_location",None), audio_bitrate=getattr(self.args,"audio_bitrate",128), archive=getattr(self.args,"archive",False), preview=getattr(self.args,"preview",False), overlay_file=getattr(self.args,"overlay_file",None))
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message', self.bus_message)
@@ -429,6 +442,7 @@ if __name__ == '__main__':
     parser.add_argument('--stream', action='store_true')
     parser.add_argument('--archive', action='store_true')
     parser.add_argument('--preview', action='store_true')
+    parser.add_argument('--overlay-file')
     parser.add_argument('--output')
     parser.add_argument('--fps', type=int, choices=[30, 60], default=30)
     parser.add_argument('--audio', action='store_true')
@@ -443,7 +457,7 @@ if __name__ == '__main__':
         required = ['pipewiresrc', 'videoconvert', 'videoscale', 'videorate', 'filesink']
         missing = [name for name in required if not Gst.ElementFactory.find(name)]
         codecs = available_codecs()
-        event('capabilities', preview=all(Gst.ElementFactory.find(n) for n in ('tee','queue','jpegenc','appsink','level')), streaming=streaming_supported(), supported=not missing and bool(codecs), codecs=codecs, missing=missing, replay=bool(shutil.which('ffmpeg') and Gst.ElementFactory.find('splitmuxsink')), audio=all(Gst.ElementFactory.find(n) for n in ['pulsesrc', 'audiomixer', 'audioconvert', 'audioresample', 'volume']))
+        event('capabilities', scenes=bool(Gst.ElementFactory.find('gdkpixbufoverlay')), preview=all(Gst.ElementFactory.find(n) for n in ('tee','queue','jpegenc','appsink','level')), streaming=streaming_supported(), supported=not missing and bool(codecs), codecs=codecs, missing=missing, replay=bool(shutil.which('ffmpeg') and Gst.ElementFactory.find('splitmuxsink')), audio=all(Gst.ElementFactory.find(n) for n in ['pulsesrc', 'audiomixer', 'audioconvert', 'audioresample', 'volume']))
         raise SystemExit(bool(missing) or not codecs)
     if os.getenv('REDLINE_READ_ONLY') is not None:
         parser.error('Recording is disabled in UI preview.')

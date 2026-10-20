@@ -14,7 +14,7 @@ The status indicates local pipeline activity, not verified public platform deliv
 
 ## Remaining scope
 
-OAuth account sign-in, chat/viewer APIs, scene compositing, hardware encoder selection, adaptive bitrate and enhanced filtering are not implemented. Stream keys are session-only; keyring persistence is not implemented. RTMPS uses the sink's default TLS certificate validation. No external streaming service has been tested yet.
+OAuth account sign-in, chat/viewer APIs, camera/live scene switching, hardware encoder selection, adaptive bitrate and enhanced filtering are not implemented. Stream keys are session-only; keyring persistence is not implemented. RTMPS uses the sink's default TLS certificate validation. No external streaming service has been tested yet.
 
 ## Validation
 
@@ -31,3 +31,5 @@ An opt-in Archive Stream switch saves a local MP4 in Videos/Redline while sendin
 Record, Replay and Live Stream now request an optional 640×360 JPEG preview at up to 5 FPS from the same portal video source. A leaky queue isolates the preview branch from the encoder; the Qt image provider keeps only the current image in memory. No preview images are saved to disk. The frame and audio meters clear when the helper exits. System audio and microphone meters use pre-mix peak levels normalized across -60 to 0 dBFS; these indicate signal activity, not calibrated loudness. Unselected audio inputs remain at zero. Preview needs jpegenc/appsink/level; capture continues without it if those optional plugins are unavailable.
 
 Generated-source tests verify JPEG frames, bounded queue/rate, both meter messages and successful recording finalization. Real desktop preview and external service delivery still need interactive verification.
+
+The first functional [Scene Editor](SCENE-EDITOR.md) now supplies image/text overlays to recording and streaming.

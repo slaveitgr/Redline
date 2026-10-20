@@ -209,6 +209,7 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
   auto integration = new SystemIntegration(&qmlEngine);
   auto installer = new VrInstaller(&qmlEngine);
   QObject::connect(installer, &VrInstaller::installed, integration, &SystemIntegration::refresh);
+  qmlEngine.rootContext()->setContextProperty("sceneRenderer",new SceneRenderer(&qmlEngine));
   auto previewFrame=std::make_shared<CapturePreviewFrame>();
   qmlEngine.addImageProvider("capture",new CapturePreviewProvider(previewFrame));
   qmlEngine.rootContext()->setContextProperty("captureBackend", new CaptureBackend(&qmlEngine,previewFrame));
@@ -365,7 +366,12 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                                                               QTimer::singleShot(700,mainWindow_,[this,previewDir,allOk,aiResult,next]{
                                                                 mainWindow_->grabWindow().save(previewDir+"/redline-streaming.png");
                                                                 QVariant streamOk;QMetaObject::invokeMethod(mainWindow_,"runStreamingSmoke",Q_RETURN_ARG(QVariant,streamOk));
-                                                                QApplication::exit(allOk && aiResult.toBool() && next.toBool() && streamOk.toBool()?0:2);
+                                                                QMetaObject::invokeMethod(mainWindow_,"previewScenes");
+                                                                QTimer::singleShot(700,mainWindow_,[this,previewDir,allOk,aiResult,next,streamOk]{
+                                                                  mainWindow_->grabWindow().save(previewDir+"/redline-scenes.png");
+                                                                  QVariant sceneOk;QMetaObject::invokeMethod(mainWindow_,"runSceneSmoke",Q_RETURN_ARG(QVariant,sceneOk));
+                                                                  QApplication::exit(allOk && aiResult.toBool() && next.toBool() && streamOk.toBool() && sceneOk.toBool()?0:2);
+                                                                });
                                                               });
                                                             });
                                                           });

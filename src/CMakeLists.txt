@@ -395,6 +395,7 @@ add_executable(corectrl
   app/settingssnapshots.h
   app/capturebackend.h
   app/shortcutsupport.h
+  app/scenerenderer.h
   app/displaybackend.h
   app/vrinstaller.h
   app/systemintegration.h

@@ -16,6 +16,8 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <algorithm>
+#include <QTemporaryDir>
+#include "scenerenderer.h"
 #include <QQuickImageProvider>
 #include <QImage>
 #include <QMutex>
@@ -29,6 +31,7 @@ class CapturePreviewProvider final:public QQuickImageProvider {
 };
 class CaptureBackend final:public QObject {
  Q_OBJECT
+ Q_PROPERTY(bool sceneSupported READ sceneSupported NOTIFY changed)
  Q_PROPERTY(int previewFrame READ previewFrame NOTIFY previewChanged)
  Q_PROPERTY(bool previewAvailable READ previewAvailable NOTIFY previewChanged)
  Q_PROPERTY(double systemLevel READ systemLevel NOTIFY levelsChanged)
@@ -52,13 +55,14 @@ class CaptureBackend final:public QObject {
   connect(&timer_,&QTimer::timeout,this,[this]{emit changed();});timer_.setInterval(1000);
   connect(&process_,&QProcess::readyReadStandardError,this,[this]{process_.readAllStandardError();});
   connect(&process_,&QProcess::readyReadStandardOutput,this,[this]{read();});
-  connect(&process_,&QProcess::finished,this,[this](int code){read();timer_.stop();active_=false;clearPreview();if(code && state_!="error"){state_="error";message_="Recording failed. Check the desktop portal and media dependencies.";}else if(state_=="selecting" || state_=="stopping")state_="idle";refreshMedia();emit changed();});
+  connect(&process_,&QProcess::finished,this,[this](int code){read();timer_.stop();active_=false;clearPreview();sceneFiles_.reset();if(code && state_!="error"){state_="error";message_="Recording failed. Check the desktop portal and media dependencies.";}else if(state_=="selecting" || state_=="stopping")state_="idle";refreshMedia();emit changed();});
   connect(&process_,&QProcess::errorOccurred,this,[this](QProcess::ProcessError e){if(e==QProcess::FailedToStart){streamConfig_.fill(0);streamConfig_.clear();active_=false;state_="error";message_="Could not start the capture service.";emit changed();}});
-  auto check=new QProcess(this);connect(check,&QProcess::finished,this,[this,check](int){auto obj=QJsonDocument::fromJson(check->readAllStandardOutput().trimmed()).object();supported_=obj.value("supported").toBool();previewSupported_=obj.value("preview").toBool();streamSupported_=obj.value("streaming").toBool();replaySupported_=obj.value("replay").toBool();audio_=obj.value("audio").toBool();codecs_=obj.value("codecs").toArray().toVariantList();if(!supported_)message_="Capture dependencies are unavailable.";check->deleteLater();emit changed();});
+  auto check=new QProcess(this);connect(check,&QProcess::finished,this,[this,check](int){auto obj=QJsonDocument::fromJson(check->readAllStandardOutput().trimmed()).object();supported_=obj.value("supported").toBool();previewSupported_=obj.value("preview").toBool();sceneSupported_=obj.value("scenes").toBool();streamSupported_=obj.value("streaming").toBool();replaySupported_=obj.value("replay").toBool();audio_=obj.value("audio").toBool();codecs_=obj.value("codecs").toArray().toVariantList();if(!supported_)message_="Capture dependencies are unavailable.";check->deleteLater();emit changed();});
   check->start("/usr/bin/python3",{helper(),"--check"});refreshMedia();
  }
  ~CaptureBackend(){if(process_.state()!=QProcess::NotRunning){process_.write("stop\n");if(!process_.waitForFinished(3500)){process_.terminate();if(!process_.waitForFinished(3500)){process_.kill();process_.waitForFinished(500);}}}for(auto p:findChildren<QProcess*>()){disconnect(p,nullptr,this,nullptr);if(p->state()!=QProcess::NotRunning){p->terminate();if(!p->waitForFinished(2500)){p->kill();p->waitForFinished(500);}}}}
  bool replaySupported()const{return replaySupported_;}bool replayMode()const{return replayMode_;}
+ bool sceneSupported()const{return sceneSupported_;}
  int previewFrame()const{return frameNumber_;}bool previewAvailable()const{QMutexLocker lock(&preview_->mutex);return !preview_->image.isNull();}double systemLevel()const{return systemLevel_;}double microphoneLevel()const{return microphoneLevel_;}
  bool streamingSupported()const{return streamSupported_;}bool streaming()const{return streamMode_;}
  bool supported()const{return supported_;}bool audioSupported()const{return audio_;}bool active()const{return active_;}QString state()const{return state_;}QString message()const{return message_;}int seconds()const{return active_ && elapsed_.isValid()?int(elapsed_.elapsed()/1000):finalSeconds_;}QVariantList media()const{return media_;}QVariantList codecs()const{return codecs_;}bool screenshotBusy()const{return screenshotBusy_;}
@@ -87,6 +91,14 @@ class CaptureBackend final:public QObject {
   }
   process_.setProcessEnvironment(env);
   if(replayMode_){int length=options.value("replaySeconds",30).toInt();if(!QList<int>{15,30,60,120}.contains(length))length=30;args<<"--replay-seconds"<<QString::number(length);}
+  sceneFiles_.reset();auto scene=options.value("scene").toMap();
+  if(!scene.isEmpty()){
+   if(!sceneSupported_){message_="Scene composition requires the gdkpixbufoverlay plugin.";emit changed();return;}
+   sceneFiles_=std::make_unique<QTemporaryDir>("/tmp/redline-scene-XXXXXX");QString error;auto image=SceneRenderer::image(scene,&error);
+   const auto path=sceneFiles_->path()+"/overlay.png";
+   if(!error.isEmpty() || !sceneFiles_->isValid() || !image.save(path,"PNG")){sceneFiles_.reset();message_=error.isEmpty()?"Could not prepare scene overlays.":error;emit changed();return;}
+   args<<"--overlay-file"<<path;
+  }
   if(previewSupported_)args<<"--preview";
   if(options.value("systemAudio",false).toBool() && audio_)args<<"--audio";
   if(options.value("microphone",false).toBool() && audio_)args<<"--microphone";
@@ -108,7 +120,8 @@ class CaptureBackend final:public QObject {
  Q_INVOKABLE void openFolder(){QDir().mkpath(folder());QDesktopServices::openUrl(QUrl::fromLocalFile(folder()));}
  Q_INVOKABLE bool openMedia(QString path){auto info=QFileInfo(path);const auto base=QFileInfo(info.suffix()=="png"?pictures():folder()).canonicalFilePath();return !base.isEmpty() && info.isFile() && !info.isSymLink() && QStringList{"webm","mp4","png"}.contains(info.suffix()) && info.canonicalPath()==base && QDesktopServices::openUrl(QUrl::fromLocalFile(info.canonicalFilePath()));}
  private:
- std::shared_ptr<CapturePreviewFrame> preview_;int frameNumber_=0;bool previewSupported_=false;double systemLevel_=0,microphoneLevel_=0;
+ std::unique_ptr<QTemporaryDir> sceneFiles_;
+ std::shared_ptr<CapturePreviewFrame> preview_;int frameNumber_=0;bool previewSupported_=false,sceneSupported_=false;double systemLevel_=0,microphoneLevel_=0;
  void clearPreview(){{QMutexLocker lock(&preview_->mutex);preview_->image=QImage();}systemLevel_=microphoneLevel_=0;emit previewChanged();emit levelsChanged();}
  QProcess process_;QTimer timer_;QElapsedTimer elapsed_;QByteArray buffer_;bool streamSupported_=false,streamMode_=false;QByteArray streamConfig_;bool supported_=false,audio_=false,active_=false,replaySupported_=false,replayMode_=false;int finalSeconds_=0;QString state_="idle",message_,output_;QVariantList media_,codecs_;bool screenshotBusy_=false;
  static QString helper(){return QCoreApplication::applicationDirPath()+"/../libexec/redline/redline-capture.py";}

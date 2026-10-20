@@ -37,6 +37,7 @@
         <file>qml/RedlineCapture.qml</file>
         <file>qml/RedlineCapturePreview.qml</file>
         <file>qml/RedlineStreaming.qml</file>
+        <file>qml/RedlineScenes.qml</file>
         <file>qml/RedlineHotkeys.qml</file>
         <file>qml/RedlineShortcut.qml</file>
         <file>qml/RedlineGraphics.qml</file>

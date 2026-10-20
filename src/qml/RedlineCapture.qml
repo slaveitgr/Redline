@@ -16,7 +16,7 @@ Item {
  property int fps:{var r=store.revision;return parseInt(store.read("rec.fps","30 fps"))===60?60:30}
  property bool replayEnabled:{var r=store.revision;return store.read("rec.replay",false)}
  property int replaySeconds:{var r=store.revision;return Number(store.read("rec.replaySeconds",30))}
- function toggleRecording(){if(captureBackend.active)captureBackend.stop();else captureBackend.start({systemAudio:page.systemAudio,microphone:page.microphone,fps:page.fps,codec:page.codec,bitrate:page.bitrate,resolution:page.resolution,replay:page.replayEnabled,replaySeconds:page.replaySeconds})}
+ function toggleRecording(){if(captureBackend.active)captureBackend.stop();else captureBackend.start({scene:page.store.captureScene(),systemAudio:page.systemAudio,microphone:page.microphone,fps:page.fps,codec:page.codec,bitrate:page.bitrate,resolution:page.resolution,replay:page.replayEnabled,replaySeconds:page.replaySeconds})}
  function tr(s){return redlineAppearance.text(s,redlineAppearance.revision)}
  function shade(s){return redlineAppearance.color(s,redlineAppearance.revision)}
  ColumnLayout {

@@ -27,6 +27,8 @@ Actual Redline interface from the development build.
 
 ![Custom Live Stream](docs/screenshots/streaming.png)
 
+![Scene Editor](docs/screenshots/scenes.png)
+
 ![Application hotkeys](docs/screenshots/hotkeys.png)
 
 ### Inside Redline
@@ -43,6 +45,7 @@ Actual Redline interface from the development build.
 | **Recording & Media** | Experimental VP8/VP9/WebM and H.264/MP4 profiles, bitrate/resolution, microphone/system audio mixing, portal screenshots and saved media. One real desktop/audio recording completed and decoded successfully; an earlier intermittent stop failure remains under investigation. |
 | **System** | Hardware and driver information, driver compatibility catalog, settings export/import and scoped reset. |
 | **Live Stream** | Custom RTMP/RTMPS, H.264/AAC software encoding, streaming profiles, resolution/FPS/bitrate and optional system audio/microphone and simultaneous local MP4 archiving. Keys are session-only. Loopback transmission tested; in-memory live preview and audio activity meters implemented; external service validation pending. |
+| **Scene Editor** | Saved scenes with image/text overlays, position/size/opacity and layer order; used by recording, replay and streaming. Camera and live switching pending. |
 | **Instant Replay** | Opt-in rolling VP8/WebM buffer, live snapshot export, 15/30/60/120-second choices and in-app save shortcut. Completed segments may omit the newest ~2 seconds. Real desktop replay validation pending. |
 | **Hotkeys** | Configurable in-app recording, metrics logging and navigation shortcuts with conflict checks and repeat suppression. |
 | **Appearance** | Dark/light appearance, Greek/English core interface and Redline tray branding. |

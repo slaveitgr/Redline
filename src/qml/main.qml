@@ -37,6 +37,7 @@ ApplicationWindow {
   }
   function globalRead(name,fallback){try{var value=JSON.parse(settings.getValue("UiV6/"+name,JSON.stringify(fallback)));return value===null?fallback:value}catch(e){return fallback}}
   function read(name, fallback) {var rev=revision;if(name.indexOf("launch.")===0 && appWindow.selectedGame)fallback=globalRead(name,fallback);try {var value=JSON.parse(settings.getValue("UiV6/"+key(name),JSON.stringify(fallback)));return value===null?fallback:value} catch(e){return fallback}}
+  function captureScene(){if(!read("scene.enabled",false))return {};var scenes=read("scene.list",[]);var selected=read("scene.selected","");for(var i=0;i<scenes.length;i++)if(scenes[i].id===selected)return scenes[i];return scenes.length?scenes[0]:{}}
   function clearLaunchOverrides(){if(!appWindow.selectedGame)return;var keys=["launch.gamemode","launch.gamescope","launch.fps","launch.renderSize","launch.outputSize","launch.scaler","launch.filter"];for(var i=0;i<keys.length;i++)settings.setValue("UiV6/"+key(keys[i]),"null");revision++}
   function write(name,value) {settings.setValue("UiV6/"+key(name),JSON.stringify(value));revision++}
   function isFavorite(id) {return read("favorites",[]).indexOf(id)>=0}
@@ -272,6 +273,8 @@ ApplicationWindow {
  function previewCaptureSettings(){settingsPage.closePreviewDialogs();resetAppearance();navigateTo(3,"Settings","")}
  function previewGraphics(){navigateTo(2,"Graphics","")}
  function runStreamingSmoke(){var passed=streamPage.verify();console.log("Redline streaming navigation, presets and empty credentials smoke: "+(passed?"PASS":"FAIL"));return passed}
+ function previewScenes(){appWindow.navigateTo(3,"Scene Editor","");scenePage.update("textEnabled",true);scenePage.update("text","REDLINE\nSlave IT Solutions — Greece");scenePage.update("textY",.72);scenePage.selectedLayer="text"}
+ function runSceneSmoke(){var passed=scenePage.verify();console.log("Redline scene creation, selection and capture snapshot smoke: "+(passed?"PASS":"FAIL"));return passed}
  function previewStreaming(){appWindow.navigateTo(3,"Live Stream","")}
  function previewHotkeys(){navigateTo(6,"Hotkeys","")}
  function runNewFeaturesSmoke(){
@@ -343,7 +346,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
  }
  StackLayout {
   anchors.fill: parent
-  currentIndex: appWindow.section===3 && appWindow.subSection==="Live Stream"?11:appWindow.section===6 && appWindow.subSection==="Hotkeys"?10:appWindow.section===2 && appWindow.subSection==="Graphics"?9:appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:appWindow.section===3 && (["Record","Media","Settings"].indexOf(appWindow.subSection)>=0)?8:4
+  currentIndex: appWindow.section===3 && appWindow.subSection==="Scene Editor"?12:appWindow.section===3 && appWindow.subSection==="Live Stream"?11:appWindow.section===6 && appWindow.subSection==="Hotkeys"?10:appWindow.section===2 && appWindow.subSection==="Graphics"?9:appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:appWindow.section===3 && (["Record","Media","Settings"].indexOf(appWindow.subSection)>=0)?8:4
   RedlineHome {
    onOpenAI:prompt=>{appWindow.navigateTo(1,"Chat","");aiPage.draft(prompt)}
    onOpenGames:appWindow.navigateTo(2,"Games","")
@@ -370,6 +373,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
   RedlineGraphics {store:uiStore;onOpenGames:appWindow.navigateTo(2,"Games","")}
   RedlineHotkeys {store:uiStore;onOpenOverlay:{appWindow.navigateTo(4,"Metrics","");uiStore.write("perf.metrics.mode","Overlay")}}
   RedlineStreaming {id:streamPage;store:uiStore}
+  RedlineScenes {id:scenePage;store:uiStore}
  }
 
  RedlineShortcut {settingsStore:uiStore;action:"replay";defaultSequence:"Ctrl+Shift+S";onActivated:captureBackend.saveReplay()}

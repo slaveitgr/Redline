@@ -17,7 +17,7 @@ Item {
  function shade(c){return redlineAppearance.color(c,redlineAppearance.revision)}
  function preset(value){store.write("stream.profile",value);if(value==="Custom")return;var p=value==="Low"?["720p",30,3]:value==="Medium"?["720p",60,5]:value==="High"?["1080p",30,6]:["1080p",60,10];store.write("stream.resolution",p[0]);store.write("stream.fps",p[1]);store.write("stream.bitrate",p[2])}
  function verify(){var old=[store.read("stream.profile","High"),store.read("stream.resolution","1080p"),store.read("stream.fps",30),store.read("stream.bitrate",6)];preset("Low");var valid=store.read("stream.resolution","")==="720p" && Number(store.read("stream.bitrate",0))===3;store.write("stream.profile",old[0]);store.write("stream.resolution",old[1]);store.write("stream.fps",old[2]);store.write("stream.bitrate",old[3]);return valid && server.text.length===0 && streamKey.text.length===0}
- function goLive(){captureBackend.start({stream:true,archive:page.archive,server:server.text.trim(),key:streamKey.text,codec:"h264",resolution:page.resolution,fps:page.fps,bitrate:page.bitrate,audioBitrate:page.audioBitrate,systemAudio:page.systemAudio,microphone:page.microphone});streamKey.clear()}
+ function goLive(){captureBackend.start({scene:page.store.captureScene(),stream:true,archive:page.archive,server:server.text.trim(),key:streamKey.text,codec:"h264",resolution:page.resolution,fps:page.fps,bitrate:page.bitrate,audioBitrate:page.audioBitrate,systemAudio:page.systemAudio,microphone:page.microphone});streamKey.clear()}
  ColumnLayout {
   anchors.fill:parent;anchors.margins:18;spacing:14
   Label {text:"Live Stream";font.pixelSize:22;color:page.shade("#eee")}
