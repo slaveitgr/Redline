@@ -45,7 +45,7 @@ Item {
    ColumnLayout {
     visible:page.subpage==="System";Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:(settingsScroll.availableWidth-98)/2;Layout.alignment:Qt.AlignTop;Layout.margins:18;spacing:12
     RedlineSettingsGroup {
-     heading:"Redline — Linux Graphics Edition"
+     heading:"Redline — AMD Adrenalin Open Source Alternative"
      Rectangle {
       Layout.fillWidth:true;implicitHeight:154;color:redlineAppearance.color("#252528", redlineAppearance.revision)
       ColumnLayout {

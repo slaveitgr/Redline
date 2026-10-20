@@ -27,12 +27,6 @@
   "Apps": "Εφαρμογές",
   "About": "Σχετικά",
   "About Redline": "Σχετικά με τη Redline",
-  "Redline — Open-Source AMD Adrenalin Alternative": "Redline — Εναλλακτική ανοικτού κώδικα του AMD Adrenalin",
-  "Open-source AMD Adrenalin alternative for Linux": "Εναλλακτική ανοικτού κώδικα του AMD Adrenalin για Linux",
-  "Open-Source AMD Adrenalin Alternative for Linux · ": "Εναλλακτική ανοικτού κώδικα του AMD Adrenalin για Linux · ",
-  "An independent, open-source Linux alternative to AMD Software: Adrenalin Edition. Built for real Linux GPU and gaming workflows.": "Μια ανεξάρτητη εναλλακτική ανοικτού κώδικα του AMD Software: Adrenalin Edition για Linux, με εργαλεία GPU και gaming.",
-  "GPU / CPU monitoring, supported tuning, profiles and gaming tools in one app. Full Adrenalin feature parity is not yet available.": "Παρακολούθηση GPU / CPU, υποστηριζόμενες ρυθμίσεις, προφίλ και εργαλεία gaming. Η πλήρης ισοδυναμία με το Adrenalin δεν έχει ακόμη ολοκληρωθεί.",
-  "Not affiliated with, endorsed by or sponsored by AMD.": "Ανεξάρτητο έργο, χωρίς συνεργασία, έγκριση ή χορηγία της AMD.",
   "Close": "Κλείσιμο",
   "Back": "Πίσω",
   "Forward": "Εμπρός",
@@ -458,5 +452,8 @@
   "Installation failed or was cancelled. Open the official setup guide for help.": "Η εγκατάσταση απέτυχε ή ακυρώθηκε. Άνοιξε τον επίσημο οδηγό ρύθμισης για βοήθεια.",
   "Capture and streaming are not connected. These controls save setup preferences only; no recording or broadcast starts.": "Η καταγραφή και η ζωντανή μετάδοση δεν έχουν συνδεθεί. Οι επιλογές αποθηκεύουν μόνο προτιμήσεις ρύθμισης· δεν ξεκινά εγγραφή ή μετάδοση.",
   "Per-game supersampling needs a separate Linux implementation.": "Το supersampling ανά παιχνίδι χρειάζεται ξεχωριστή υλοποίηση για Linux.",
-  "Desktop-wide VSR control is not connected in Redline.": "Ο έλεγχος VSR για ολόκληρη την επιφάνεια εργασίας δεν έχει συνδεθεί στο Redline."
+  "Desktop-wide VSR control is not connected in Redline.": "Ο έλεγχος VSR για ολόκληρη την επιφάνεια εργασίας δεν έχει συνδεθεί στο Redline.",
+  "Open-source alternative to AMD Software: Adrenalin Edition for Linux. Independent project; not affiliated with AMD.": "Ανοικτού κώδικα εναλλακτική του AMD Software: Adrenalin Edition για Linux. Ανεξάρτητο έργο χωρίς σύνδεση με την AMD.",
+  "Redline — AMD Adrenalin Alternative for Linux": "Redline — Εναλλακτική του AMD Adrenalin για Linux",
+  "Redline — AMD Adrenalin Open Source Alternative": "Redline — Ανοικτού κώδικα εναλλακτική του AMD Adrenalin"
 }

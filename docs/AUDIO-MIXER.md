@@ -1,6 +1,7 @@
 # Capture audio mixer
 
-> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+**Redline — Open-source alternative to AMD Software: Adrenalin Edition for Linux.**
+
 
 Record & Stream → Settings and Live Stream share device, volume and mute preferences.
 Enable system audio and/or microphone, refresh the device list and choose a device. System audio lists output monitors; microphone lists input sources. System default follows the audio server default. Named selections are validated before capture and checked every two seconds during capture. A missing named device stops capture instead of deliberately selecting another source. Audio-server automatic routing and physical unplug behavior still need hardware validation.

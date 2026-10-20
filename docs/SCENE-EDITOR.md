@@ -1,6 +1,7 @@
 # Scene Editor — first functional implementation
 
-> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+**Redline — Open-source alternative to AMD Software: Adrenalin Edition for Linux.**
+
 
 The editor follows the observed source/scene/property structure of the supplied Windows reference. This implementation supports up to 20 locally saved scenes, creation/deletion/renaming/selection, an image layer and a text layer over the portal-selected screen/window. A master Use scene at capture start switch is off by default. It applies to Record, Replay, Custom Live Stream and its archive.
 

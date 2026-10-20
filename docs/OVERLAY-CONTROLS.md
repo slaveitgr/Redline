@@ -1,6 +1,7 @@
 # Overlay and game launch controls
 
-> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+**Redline — Open-source alternative to AMD Software: Adrenalin Edition for Linux.**
+
 
 Performance > Metrics > Overlay now configures 12 MangoHud metric flags, Compact/Balanced/Detailed profiles (manual changes become Custom), horizontal layout, an allowlisted in-game toggle hotkey, font, position, background opacity and a global FPS limit. Metrics visibility inside the Redline window is independent of the in-game overlay. Unsupported sensor values remain dependent on MangoHud/driver availability.
 

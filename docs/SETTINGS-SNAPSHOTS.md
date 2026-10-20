@@ -1,6 +1,7 @@
 # Snap Settings and application reset
 
-> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+**Redline — Open-source alternative to AMD Software: Adrenalin Edition for Linux.**
+
 
 Settings > System now implements the Adrenalin-style Snap Settings import/export action and a confirmed, scoped application reset. This is original Redline code using validated JSON; it does not import AMD's binary settings format.
 

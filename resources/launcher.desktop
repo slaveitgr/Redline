@@ -1,7 +1,8 @@
 [Desktop Entry]
 Name=Redline
-GenericName=Open-source AMD Adrenalin Alternative for Linux
-Comment=Independent open-source Linux graphics and gaming control center inspired by AMD Adrenalin
+GenericName=Linux Graphics
+Comment=Open-source alternative to AMD Software: Adrenalin Edition for Linux
+Comment[el]=Ανοικτού κώδικα εναλλακτική του AMD Adrenalin για Linux
 Exec=redline-native
 Icon=redline
 StartupNotify=true
@@ -9,7 +10,7 @@ StartupWMClass=io.github.redline.native.Redline
 Terminal=false
 Type=Application
 Categories=System;Settings;Utility;
-Keywords=amd;adrenalin;adrenaline;radeon;linux;graphics;gaming;control;system;hardware;frequency;fan;voltage;overclock;underclock;gpu;cpu;
+Keywords=control;system;hardware;frequency;fan;voltage;overclock;underclock;gpu;cpu;
 
 # Translations
 GenericName[bg]=Централен Контрол

@@ -1,10 +1,10 @@
-# Redline — Open-Source AMD Adrenalin Alternative for Linux
+# Redline — AMD Adrenalin Open Source Alternative
 
-An independent, open-source alternative to AMD Software: Adrenalin Edition for Linux, maintained by **Slave IT Solutions** — [info@slave.gr](mailto:info@slave.gr).
+An open-source alternative to AMD Software: Adrenalin Edition for Linux, maintained by **Slave IT Solutions** — [info@slave.gr](mailto:info@slave.gr).
 
-Redline is a native Qt 6/QML source fork of [CoreCtrl](https://gitlab.com/corectrl/corectrl), with an integrated GPU engine derived from [LACT](https://github.com/ilya-zlobintsev/LACT). The interface targets familiar AMD Adrenalin-style workflows, using Redline branding and native Linux backends.
+Redline is a native Qt 6/QML source fork of [CoreCtrl](https://gitlab.com/corectrl/corectrl), with an integrated GPU engine derived from [LACT](https://github.com/ilya-zlobintsev/LACT). The interface targets the layout and interaction style of AMD Software: Adrenalin Edition, with Redline branding.
 
-**Development version.** Full interface and functionality parity is not complete. There is no stable `.deb` release yet. AMD Windows binaries, recovered proprietary code and extracted assets are not distributed here. Redline is independent: it is not affiliated with, endorsed by or sponsored by AMD.
+**Development version.** Full interface and functionality parity is not complete. There is no stable `.deb` release yet. AMD Windows binaries, recovered proprietary code and extracted assets are not distributed here. Redline is an independent project and is not an official AMD product.
 
 ## What currently works
 

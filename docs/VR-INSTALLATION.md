@@ -1,6 +1,7 @@
 # Easy VR setup
 
-> **Redline** is an independent, open-source alternative to **AMD Software: Adrenalin Edition** for Linux. This page documents one part of the native Linux implementation; features and parity depend on hardware, drivers and desktop support. [Project overview](../README.md).
+**Redline — Open-source alternative to AMD Software: Adrenalin Edition for Linux.**
+
 
 The ReLive VR page now provides Install/Open buttons for ALVR and WiVRn, a source/scope confirmation, progress/errors and refreshed detection after success. No installation runs on app startup or merely selecting a backend. Installation is blocked in the read-only UI preview.
 
