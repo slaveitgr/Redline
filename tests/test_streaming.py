@@ -64,7 +64,7 @@ class StreamingTests(unittest.TestCase):
     time.sleep(.4)
     self.assertIsNone(receiver.poll(),'Local RTMP receiver failed to start')
     local=pathlib.Path(folder)/'archive.mp4'
-    pipeline=capture.make_pipeline(str(local) if archive else None,synthetic=True,codec='h264',audio=True,stream=endpoint,audio_bitrate=192,resolution='720p',bitrate=3,archive=archive)
+    pipeline=capture.make_pipeline(str(local) if archive else None,synthetic=True,codec='h264',audio=True,stream=endpoint,audio_bitrate=192,resolution='720p',bitrate=3,archive=archive,preview=True,on_preview=lambda frame:None)
     pipeline.get_by_name('screen').set_property('num-buffers',120)
     pipeline.get_by_name('system-audio').set_property('num-buffers',190)
     if archive:

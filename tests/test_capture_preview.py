@@ -3,6 +3,8 @@
 import importlib.util
 import pathlib
 import tempfile
+import subprocess
+import shutil
 import unittest
 spec=importlib.util.spec_from_file_location('capture',pathlib.Path(__file__).parents[1]/'tools/redline-capture.py')
 capture=importlib.util.module_from_spec(spec);spec.loader.exec_module(capture)
@@ -27,6 +29,8 @@ class PreviewTests(unittest.TestCase):
     self.assertTrue(all(f[:2]==b'\xff\xd8' and len(f)<=200000 for f in frames))
     self.assertEqual(levels,{'system-level','microphone-level'})
     self.assertGreater(output.stat().st_size,1000)
+    if shutil.which('ffmpeg'):
+     subprocess.run(['ffmpeg','-v','error','-i',str(output),'-f','null','-'],check=True,timeout=15)
     self.assertEqual(pipeline.get_by_name('preview-queue').get_property('max-size-buffers'),1)
    finally:pipeline.set_state(capture.Gst.State.NULL)
 
