@@ -38,8 +38,9 @@ Actual Redline interface from the development build.
 | **Local AI** | Ollama model discovery and session chat, with an optional hardware snapshot attached by the user. Requires a running local Ollama service and model. |
 | **VR setup** | ALVR launcher installation and launch; WiVRn installation through an existing Flathub setup. Headset pairing and streaming are handled by the selected backend. |
 | **Display** | GNOME resolution/refresh, desktop scaling, advertised Adaptive Sync and color modes, with the desktop’s confirmation/revert dialog. |
-| **Recording & Media** | Experimental VP8/VP9/WebM and H.264/MP4 profiles, bitrate/resolution, microphone/system audio mixing, portal screenshots and saved media. Interactive portal validation is pending. |
+| **Recording & Media** | Experimental VP8/VP9/WebM and H.264/MP4 profiles, bitrate/resolution, microphone/system audio mixing, portal screenshots and saved media. One real desktop/audio recording completed and decoded successfully; an earlier intermittent stop failure remains under investigation. |
 | **System** | Hardware and driver information, driver compatibility catalog, settings export/import and scoped reset. |
+| **Instant Replay** | Opt-in rolling VP8/WebM buffer, live snapshot export, 15/30/60/120-second choices and in-app save shortcut. Completed segments may omit the newest ~2 seconds. Real desktop replay validation pending. |
 | **Hotkeys** | Configurable in-app recording, metrics logging and navigation shortcuts with conflict checks and repeat suppression. |
 | **Appearance** | Dark/light appearance, Greek/English core interface and Redline tray branding. |
 
@@ -47,10 +48,10 @@ Live streaming, advanced color adjustments and additional feature parity are und
 
 ### Download Alpha 2 (native package)
 
-[**Download Redline 0.9.0 Alpha 2**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.3)
+[**Download Redline 0.9.0 Alpha 4**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.4)
 
 - **Ubuntu 26.10 amd64:** native `.deb` with hardware services and dependency installation through APT.
-- [**AppImage Preview x86_64 (Alpha 1)**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.3): try the interface and monitoring without installing hardware services. Built on Ubuntu 26.10; older distribution compatibility is not yet verified.
+- [**AppImage Preview x86_64 (Alpha 3)**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.3): try the interface and monitoring without installing hardware services. Built on Ubuntu 26.10; older distribution compatibility is not yet verified.
 - **SHA256SUMS:** checksums are included with the release.
 
 ```sh
@@ -112,7 +113,7 @@ AMD Software: Adrenalin Edition is the interface reference. Redline is an indepe
 
 ### Λήψη
 
-[**Κατέβασε το Redline 0.9.0 Alpha 2**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.3): `.deb` για Ubuntu 26.10 amd64, AppImage Preview x86_64 και checksums. Τα builds Debian ελέγχονται χωριστά στο GitHub Actions.
+[**Κατέβασε το Redline 0.9.0 Alpha 4**](https://github.com/slaveitgr/Redline/releases/tag/v0.9.0-alpha.4): `.deb` για Ubuntu 26.10 amd64 και checksums. Το AppImage Preview βρίσκεται στην Alpha 3. Τα builds Debian ελέγχονται χωριστά στο GitHub Actions.
 
 ### Τι προσφέρει σήμερα
 
