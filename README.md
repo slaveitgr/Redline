@@ -1,17 +1,17 @@
 <p align="center"><img src="resources/icon/app_128.svg" width="96" alt="Redline"></p>
-<h1 align="center">REDLINE · Linux Graphics Edition</h1>
-<p align="center"><strong>Your hardware. Your games. One familiar control center.</strong><br>Developed by <a href="https://slave.gr">Slave IT Solutions — Greece</a></p>
+<h1 align="center">REDLINE · Open-Source AMD Adrenalin Alternative for Linux</h1>
+<p align="center"><strong>Your GPU. Your Games. Your Control.</strong><br>An independent, open-source alternative to AMD Software: Adrenalin Edition for Linux.<br>Developed by <a href="https://slave.gr">Slave IT Solutions — Greece</a></p>
 <p align="center"><a href="#english">English</a> · <a href="#ελληνικά">Ελληνικά</a> · <a href="docs/PARITY-ROADMAP.md">Feature roadmap</a> · <a href="https://github.com/slaveitgr/Redline/issues">Report an issue</a></p>
 
 ---
 
 ## English
 
-**Redline is an open-source, native Linux graphics and gaming control center with an Adrenalin-inspired interface.** It brings hardware monitoring, supported GPU tuning, game profiles and Linux gaming tools into a single Qt 6 application. Its goal is to make the move from Windows to Linux easier, especially for users who want clear controls instead of a collection of terminal commands.
+**Redline is an independent, open-source alternative to AMD Software: Adrenalin Edition for Linux.** It brings GPU monitoring, supported hardware tuning, game profiles and Linux gaming tools into a single native Qt 6 application, with an Adrenalin-inspired experience. Its goal is to make the move from Windows to Linux easier, especially for users who want clear controls instead of a collection of terminal commands.
 
 Built and maintained in Greece by **Slave IT Solutions**, Redline combines a CoreCtrl-derived application foundation with an integrated LACT-derived GPU engine and a growing Redline interface.
 
-> **Development preview:** active implementation is underway. Available controls depend on the GPU, Linux driver, desktop session and installed tools. A visible page does not imply that every Windows feature has a working Linux equivalent.
+> **Development preview, not feature-for-feature replacement:** Redline aims to provide a practical AMD Adrenalin alternative on Linux, but not every Adrenalin feature has a Linux equivalent. Available controls depend on the GPU, driver, desktop session and installed tools; a visible page does not guarantee working hardware support.
 
 ### Screenshots
 
@@ -109,13 +109,13 @@ Contributions to Linux backend support, accessibility, translations, interface c
 
 Redline and CoreCtrl-derived code are **GPL-3.0-or-later**; see [COPYING](COPYING) and [LICENSE](LICENSE). LACT-derived components retain their MIT license and component-specific notices. Included third-party licenses remain applicable when redistributing.
 
-AMD Software: Adrenalin Edition is the interface reference. Redline is an independent community project; AMD and Radeon trademarks belong to their respective owners.
+**Independence notice:** Redline is independently developed and is not affiliated with, endorsed by or sponsored by AMD. AMD Software: Adrenalin Edition is an AMD product and serves only as a product-category and interface reference. AMD and Radeon are trademarks of their respective owners.
 
 ---
 
 ## Ελληνικά
 
-**Το Redline είναι ένα ανοικτού κώδικα κέντρο ελέγχου γραφικών και gaming για Linux, με περιβάλλον εμπνευσμένο από το Adrenalin.** Συγκεντρώνει παρακολούθηση υλικού, υποστηριζόμενες ρυθμίσεις GPU, προφίλ παιχνιδιών και εργαλεία Linux gaming σε μία εφαρμογή Qt 6.
+**Το Redline είναι μια ανεξάρτητη, ανοικτού κώδικα εναλλακτική του AMD Software: Adrenalin Edition για Linux.** Με οικείο περιβάλλον εμπνευσμένο από το Adrenalin, συγκεντρώνει παρακολούθηση GPU, υποστηριζόμενες ρυθμίσεις υλικού, προφίλ παιχνιδιών και εργαλεία Linux gaming σε μία εφαρμογή Qt 6.
 
 Αναπτύσσεται από τη **Slave IT Solutions στην Ελλάδα**, με στόχο η μετάβαση από τα Windows στο Linux να γίνει πιο εύκολη: οικείο περιβάλλον, κατανοητές επιλογές και λιγότερη ανάγκη για εντολές στο τερματικό.
 
@@ -149,4 +149,4 @@ AMD Software: Adrenalin Edition is the interface reference. Redline is an indepe
 
 Ευχαριστούμε τους συντελεστές των **CoreCtrl** και **LACT**, πάνω στη δουλειά των οποίων βασίζονται σημαντικά τμήματα του Redline, καθώς και τις κοινότητες **Qt, MangoHud, GameMode, Gamescope, ALVR, WiVRn και Ollama**. Οι άδειες και οι αναφορές των επιμέρους έργων διατηρούνται στον πηγαίο κώδικα.
 
-Το Redline διατίθεται με **GPL-3.0-or-later**, με τις επιμέρους άδειες των ενσωματωμένων βιβλιοθηκών. Είναι ανεξάρτητο κοινοτικό έργο.
+Το Redline διατίθεται με **GPL-3.0-or-later**, με τις επιμέρους άδειες των ενσωματωμένων βιβλιοθηκών. **Δεν αποτελεί προϊόν της AMD ούτε σχετίζεται επίσημα με αυτήν.** Η ισοδυναμία λειτουργιών με το Adrenalin δεν έχει ολοκληρωθεί.

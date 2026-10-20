@@ -28,7 +28,7 @@ Item {
      ColumnLayout {
       anchors.fill: parent; anchors.margins: 14; spacing: 10
       Label { text: redlineAppearance.text(("Global graphics"), redlineAppearance.revision); font.pixelSize: 19; color: redlineAppearance.color("#ededf0", redlineAppearance.revision); Layout.alignment: Qt.AlignHCenter }
-      Small { text: redlineAppearance.text(("Manage performance & power profiles"), redlineAppearance.revision); Layout.alignment: Qt.AlignHCenter }
+      Small { text: redlineAppearance.text(("Open-source AMD Adrenalin alternative for Linux"), redlineAppearance.revision); Layout.alignment: Qt.AlignHCenter; horizontalAlignment: Text.AlignHCenter }
       RedlineButton { text: "Configure"; accent: true; Layout.fillWidth: true; onClicked: home.openGraphics() }
      }
     }

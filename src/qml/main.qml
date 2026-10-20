@@ -10,7 +10,7 @@ import "Settings.js" as Settings
 import "RedlineDesign.js" as Design
 ApplicationWindow {
  id: appWindow
- title: redlineAppearance.text(redlineReadOnly?"Redline — UI Preview":"Redline — Linux Graphics Edition", redlineAppearance.revision)
+ title: redlineAppearance.text(redlineReadOnly?"Redline — UI Preview":"Redline — Open-Source AMD Adrenalin Alternative", redlineAppearance.revision)
  width: 1460; height: 920
  minimumWidth: 1180; minimumHeight: 700
  font.family: "Sans Serif"; font.pixelSize: 14
@@ -181,6 +181,7 @@ ApplicationWindow {
    ColumnLayout {
     width:parent.width;spacing:0
     Label {text:"REDLINE";font.pixelSize:18;font.bold:true;color:redlineAppearance.color("#eeeeee",redlineAppearance.revision);Layout.margins:20}
+    Label {text:redlineAppearance.text("Open-source AMD Adrenalin alternative for Linux",redlineAppearance.revision);font.pixelSize:11;wrapMode:Text.WordWrap;Layout.fillWidth:true;Layout.leftMargin:20;Layout.rightMargin:20;Layout.bottomMargin:12;color:redlineAppearance.color("#aaaab0",redlineAppearance.revision)}
     Repeater {model:appWindow.sectionNames
      ItemDelegate {id:sidebarEntry;required property int index;required property string modelData;Layout.fillWidth:true;text:redlineAppearance.text(modelData,redlineAppearance.revision);highlighted:appWindow.section===index;contentItem:Label{text:sidebarEntry.text;color:sidebarEntry.highlighted?"white":redlineAppearance.color("#dddddd",redlineAppearance.revision);verticalAlignment:Text.AlignVCenter}
       onClicked:{appWindow.navigate(index);navigationDrawer.close()}}

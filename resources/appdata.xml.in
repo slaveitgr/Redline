@@ -2,9 +2,9 @@
 <component type="desktop-application">
  <id>@APP_FULL_NAME@</id>
  <metadata_license>CC0-1.0</metadata_license><project_license>GPL-3.0-or-later</project_license>
- <name>Redline</name><summary>Linux graphics controls, monitoring and gaming tools</summary>
+ <name>Redline</name><summary>Open-source AMD Adrenalin alternative for Linux</summary>
  <launchable type="desktop-id">@APP_FULL_NAME@.desktop</launchable>
- <description><p>A native Qt dashboard with CoreCtrl and LACT-derived hardware controls, live metrics, game launch integration and experimental screen recording. Development preview; full Adrenalin feature parity is not implemented.</p></description>
+ <description><p>Redline is an independent open-source alternative to AMD Software: Adrenalin Edition for Linux, featuring a native Qt interface, CoreCtrl and LACT-derived supported hardware controls, live metrics, game launch integration and experimental recording. Feature parity is incomplete and hardware support varies. Redline is not affiliated with AMD.</p></description>
  <provides><binary>redline</binary></provides>
  <developer id="gr.slave"><name>Slave IT Solutions — Greece</name></developer>
  <content_rating type="oars-1.1"/>
