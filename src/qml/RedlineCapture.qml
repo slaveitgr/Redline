@@ -27,7 +27,7 @@ Item {
    RedlineButton {text:"Take a Screenshot";enabled:!captureBackend.screenshotBusy && !redlineReadOnly;onClicked:captureBackend.takeScreenshot()}
    RedlineButton {text:"Open recordings folder";onClicked:captureBackend.openFolder()}
   }
-  Label {text:page.tr("Local recording through the Linux screen-sharing portal. Replay uses a temporary VP8/WebM buffer. Streaming and scene editing are not connected yet.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
+  Label {text:page.tr("Local recording through the Linux screen-sharing portal. Replay uses a temporary VP8/WebM buffer. Custom streaming is available under Live Stream. Scene editing is not connected yet.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
   ColumnLayout {
    visible:page.subpage==="Settings";Layout.fillWidth:true;Layout.fillHeight:true;spacing:12
    RedlineSettingRow {title:"Instant Replay";kind:"switch";currentValue:page.replayEnabled;supported:captureBackend.replaySupported && !captureBackend.active;description:"Keep a temporary buffer until stopped. Requires ffmpeg. Uses VP8/WebM.";onRequested:value=>page.store.write("rec.replay",value)}

@@ -359,7 +359,12 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                                                             QTimer::singleShot(600,mainWindow_,[this,previewDir,allOk,aiResult]{
                                                               mainWindow_->grabWindow().save(previewDir+"/redline-hotkeys.png");
                                                               QVariant next;QMetaObject::invokeMethod(mainWindow_,"runNewFeaturesSmoke",Q_RETURN_ARG(QVariant,next));
-                                                              QApplication::exit(allOk && aiResult.toBool() && next.toBool()?0:2);
+                                                              QMetaObject::invokeMethod(mainWindow_,"previewStreaming");
+                                                              QTimer::singleShot(700,mainWindow_,[this,previewDir,allOk,aiResult,next]{
+                                                                mainWindow_->grabWindow().save(previewDir+"/redline-streaming.png");
+                                                                QVariant streamOk;QMetaObject::invokeMethod(mainWindow_,"runStreamingSmoke",Q_RETURN_ARG(QVariant,streamOk));
+                                                                QApplication::exit(allOk && aiResult.toBool() && next.toBool() && streamOk.toBool()?0:2);
+                                                              });
                                                             });
                                                           });
                                                         });

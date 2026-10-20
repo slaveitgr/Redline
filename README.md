@@ -25,6 +25,8 @@ Actual Redline interface from the development build.
 
 ![Recording options](docs/screenshots/recording.png)
 
+![Custom Live Stream](docs/screenshots/streaming.png)
+
 ![Application hotkeys](docs/screenshots/hotkeys.png)
 
 ### Inside Redline
@@ -40,11 +42,12 @@ Actual Redline interface from the development build.
 | **Display** | GNOME resolution/refresh, desktop scaling, advertised Adaptive Sync and color modes, with the desktop’s confirmation/revert dialog. |
 | **Recording & Media** | Experimental VP8/VP9/WebM and H.264/MP4 profiles, bitrate/resolution, microphone/system audio mixing, portal screenshots and saved media. One real desktop/audio recording completed and decoded successfully; an earlier intermittent stop failure remains under investigation. |
 | **System** | Hardware and driver information, driver compatibility catalog, settings export/import and scoped reset. |
+| **Live Stream** | Custom RTMP/RTMPS, H.264/AAC software encoding, streaming profiles, resolution/FPS/bitrate and optional system audio/microphone. Keys are session-only. Loopback transmission tested; external services and live preview pending. |
 | **Instant Replay** | Opt-in rolling VP8/WebM buffer, live snapshot export, 15/30/60/120-second choices and in-app save shortcut. Completed segments may omit the newest ~2 seconds. Real desktop replay validation pending. |
 | **Hotkeys** | Configurable in-app recording, metrics logging and navigation shortcuts with conflict checks and repeat suppression. |
 | **Appearance** | Dark/light appearance, Greek/English core interface and Redline tray branding. |
 
-Live streaming, advanced color adjustments and additional feature parity are under development. See the [recording, gaming and hotkeys implementation](docs/RECORDING-AND-GAMING.md), [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
+Service account/chat integration, live streaming preview, advanced color adjustments and additional feature parity are under development. See the [streaming implementation](docs/STREAMING.md), [recording, gaming and hotkeys implementation](docs/RECORDING-AND-GAMING.md), [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
 
 ### Download Alpha 2 (native package)
 

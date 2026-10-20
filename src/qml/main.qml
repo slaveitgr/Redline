@@ -271,6 +271,8 @@ ApplicationWindow {
  function previewVRInstall(){navigateTo(6,"ReLive VR","");settingsPage.showVRInstall()}
  function previewCaptureSettings(){settingsPage.closePreviewDialogs();resetAppearance();navigateTo(3,"Settings","")}
  function previewGraphics(){navigateTo(2,"Graphics","")}
+ function runStreamingSmoke(){var passed=streamPage.verify();console.log("Redline streaming navigation, presets and empty credentials smoke: "+(passed?"PASS":"FAIL"));return passed}
+ function previewStreaming(){appWindow.navigateTo(3,"Live Stream","")}
  function previewHotkeys(){navigateTo(6,"Hotkeys","")}
  function runNewFeaturesSmoke(){
   var passed=captureBackend.codecs.length>0 && shortcutSupport.canonical("Ctrl+Shift+R")==="Ctrl+Shift+R" && shortcutSupport.canonical("plain text")===""
@@ -341,7 +343,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
  }
  StackLayout {
   anchors.fill: parent
-  currentIndex: appWindow.section===6 && appWindow.subSection==="Hotkeys"?10:appWindow.section===2 && appWindow.subSection==="Graphics"?9:appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:appWindow.section===3 && (["Record","Media","Settings"].indexOf(appWindow.subSection)>=0)?8:4
+  currentIndex: appWindow.section===3 && appWindow.subSection==="Live Stream"?11:appWindow.section===6 && appWindow.subSection==="Hotkeys"?10:appWindow.section===2 && appWindow.subSection==="Graphics"?9:appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:appWindow.section===3 && (["Record","Media","Settings"].indexOf(appWindow.subSection)>=0)?8:4
   RedlineHome {
    onOpenAI:prompt=>{appWindow.navigateTo(1,"Chat","");aiPage.draft(prompt)}
    onOpenGames:appWindow.navigateTo(2,"Games","")
@@ -367,6 +369,7 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
   RedlineCapture {id:capturePage;subpage:appWindow.subSection;store:uiStore}
   RedlineGraphics {store:uiStore;onOpenGames:appWindow.navigateTo(2,"Games","")}
   RedlineHotkeys {store:uiStore;onOpenOverlay:{appWindow.navigateTo(4,"Metrics","");uiStore.write("perf.metrics.mode","Overlay")}}
+  RedlineStreaming {id:streamPage;store:uiStore}
  }
 
  RedlineShortcut {settingsStore:uiStore;action:"replay";defaultSequence:"Ctrl+Shift+S";onActivated:captureBackend.saveReplay()}

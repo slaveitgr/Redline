@@ -35,6 +35,7 @@
         <file>qml/RedlineSnapshotDialog.qml</file>
         <file>qml/RedlineVR.qml</file>
         <file>qml/RedlineCapture.qml</file>
+        <file>qml/RedlineStreaming.qml</file>
         <file>qml/RedlineHotkeys.qml</file>
         <file>qml/RedlineShortcut.qml</file>
         <file>qml/RedlineGraphics.qml</file>
