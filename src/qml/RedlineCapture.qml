@@ -53,7 +53,7 @@ Item {
      CheckBox {text:page.tr("Instant Replay");checked:page.replayEnabled;enabled:captureBackend.replaySupported && !captureBackend.active;onToggled:page.store.write("rec.replay",checked)}
      RedlineButton {text:"Save Replay";visible:captureBackend.active && captureBackend.replayMode;enabled:captureBackend.state==="recording";Layout.fillWidth:true;onClicked:captureBackend.saveReplay()}
      Label {visible:page.replayEnabled;text:page.tr("Saves completed segments; the newest ~2 seconds may be omitted. Temporary files are removed when stopped.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
-     RedlineButton {text:captureBackend.active?(captureBackend.replayMode?"Stop Replay":"Stop recording"):(page.replayEnabled?"Start Replay":"Start recording");accent:true;Layout.fillWidth:true;enabled:captureBackend.active || captureBackend.supported;onClicked:page.toggleRecording()}
+     RedlineButton {text:captureBackend.cameraPreview?"Stop camera preview":captureBackend.active?(captureBackend.replayMode?"Stop Replay":"Stop recording"):(page.replayEnabled?"Start Replay":"Start recording");accent:true;Layout.fillWidth:true;enabled:captureBackend.active || captureBackend.supported;onClicked:page.toggleRecording()}
      Label {visible:redlineReadOnly;text:page.tr("Screen recording is disabled in UI preview. Open normal Redline.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
      Label {text:page.tr(captureBackend.supported?((page.codecLabels[page.codecIds.indexOf(page.codec)] || "Select available encoder")+" · "+page.resolution+" · "+page.bitrate+" Mb/s"):"Capture dependencies are unavailable.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true}
      Item {Layout.fillHeight:true}
@@ -63,7 +63,7 @@ Item {
     Layout.fillWidth:true;Layout.fillHeight:true;color:page.shade("#17171b")
     ColumnLayout {anchors.centerIn:parent;width:parent.width-60;spacing:12
      Label {visible:!captureBackend.previewAvailable;text:captureBackend.state==="recording"?"●":"▷";color:captureBackend.state==="recording"?"#dd0031":page.shade("#777");font.pixelSize:54;Layout.alignment:Qt.AlignHCenter}
-     Label {text:page.tr(captureBackend.state==="recording"?"Recording in progress.":captureBackend.state==="selecting"?"Choose a screen or window in the system dialog.":captureBackend.state==="stopping"?"Saving recording…":"Ready to record");wrapMode:Text.WordWrap;color:page.shade("#ddd");Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter;font.pixelSize:18}
+     Label {text:page.tr(captureBackend.cameraPreview?"Camera preview — no recording":captureBackend.state==="recording"?"Recording in progress.":captureBackend.state==="selecting"?"Choose a screen or window in the system dialog.":captureBackend.state==="stopping"?"Saving recording…":"Ready to record");wrapMode:Text.WordWrap;color:page.shade("#ddd");Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter;font.pixelSize:18}
      Label {text:Math.floor(captureBackend.seconds/60).toString().padStart(2,"0")+":"+(captureBackend.seconds%60).toString().padStart(2,"0");font.pixelSize:32;color:page.shade("#ddd");Layout.alignment:Qt.AlignHCenter}
      RedlineCapturePreview {visible:captureBackend.previewAvailable;Layout.fillWidth:true;Layout.preferredHeight:Math.min(240,page.height*0.28)}
      Label {visible:!captureBackend.previewAvailable;text:page.tr("Preview appears after selecting a screen or window.");wrapMode:Text.WordWrap;color:page.shade("#999");Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter}

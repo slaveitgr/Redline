@@ -51,7 +51,9 @@ class StreamingTests(unittest.TestCase):
   self.receive(False)
  def test_loopback_stream_and_archive(self):
   self.receive(True)
- def receive(self,archive):
+ def test_loopback_camera_live_scene_switch(self):
+  self.receive(True,True)
+ def receive(self,archive,camera=False):
   if not (shutil.which("ffmpeg") and shutil.which("ffprobe") and capture.streaming_supported()):self.skipTest("Streaming dependencies required")
   with tempfile.TemporaryDirectory() as folder:
    output=pathlib.Path(folder)/'received.flv'
@@ -59,12 +61,23 @@ class StreamingTests(unittest.TestCase):
     sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
    endpoint=capture.stream_location(f'rtmp://127.0.0.1:{port}/live','test-only')
    receiver=subprocess.Popen(['ffmpeg','-nostdin','-v','error','-listen','1','-i',endpoint,'-c','copy','-y',str(output)],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-   pipeline=None;stop_timer=None
+   pipeline=None;stop_timer=None;scene_timer=None;applied=[]
    try:
     time.sleep(.4)
     self.assertIsNone(receiver.poll(),'Local RTMP receiver failed to start')
     local=pathlib.Path(folder)/'archive.mp4'
-    pipeline=capture.make_pipeline(str(local) if archive else None,synthetic=True,codec='h264',audio=True,stream=endpoint,audio_bitrate=192,resolution='720p',bitrate=3,archive=archive,preview=True,on_preview=lambda frame:None)
+    overlay=None;camera_settings=None
+    if camera:
+     import gi
+     gi.require_version('GdkPixbuf','2.0')
+     from gi.repository import GdkPixbuf
+     overlay=pathlib.Path(folder)/'overlay.png';picture=GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB,True,8,1280,720);picture.fill(0);picture.savev(str(overlay),'png',[],[])
+     camera_settings={'enabled':True,'x':0,'y':0,'width':.25,'height':.25,'opacity':1}
+    pipeline=capture.make_pipeline(str(local) if archive else None,synthetic=True,codec='h264',audio=True,stream=endpoint,audio_bitrate=192,resolution='720p',bitrate=3,archive=archive,preview=True,on_preview=lambda frame:None,camera=camera_settings,synthetic_camera=camera,overlay_file=str(overlay) if overlay else None)
+    if camera:
+     pipeline.get_by_name('camera-source').set_property('is-live',True);pipeline.get_by_name('camera-source').set_property('num-buffers',-1)
+     recorder=object.__new__(capture.Recorder);recorder.pipeline=pipeline;recorder.args=types.SimpleNamespace(overlay_file=str(overlay),camera=camera_settings)
+     scene_timer=threading.Timer(1.5,lambda:(recorder.apply_scene({'command':'scene','serial':1,'overlay':str(overlay),'camera':dict(camera_settings,x=.6,y=.6,opacity=.5)}),applied.append(True)));scene_timer.start()
     pipeline.get_by_name('screen').set_property('num-buffers',120)
     pipeline.get_by_name('system-audio').set_property('num-buffers',190)
     if archive:
@@ -85,6 +98,7 @@ class StreamingTests(unittest.TestCase):
     self.assertIsNotNone(message);self.assertEqual(message.type,capture.Gst.MessageType.EOS,message.parse_error() if message.type==capture.Gst.MessageType.ERROR else '')
     pipeline.set_state(capture.Gst.State.NULL)
     receiver.communicate(timeout=10)
+    if camera:self.assertEqual(applied,[True])
     if archive:
      local_probe=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_streams','-show_format','-of','json',str(local)]))
      self.assertEqual({s['codec_name'] for s in local_probe['streams']},{'h264','aac'})
@@ -96,6 +110,7 @@ class StreamingTests(unittest.TestCase):
     subprocess.run(['ffmpeg','-v','error','-i',str(output),'-f','null','-'],check=True,timeout=15)
    finally:
     if stop_timer:stop_timer.cancel()
+    if scene_timer:scene_timer.cancel()
     if pipeline:pipeline.set_state(capture.Gst.State.NULL)
     if receiver.poll() is None:receiver.terminate();receiver.communicate(timeout=5)
 

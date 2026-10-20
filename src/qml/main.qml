@@ -273,7 +273,7 @@ ApplicationWindow {
  function previewCaptureSettings(){settingsPage.closePreviewDialogs();resetAppearance();navigateTo(3,"Settings","")}
  function previewGraphics(){navigateTo(2,"Graphics","")}
  function runStreamingSmoke(){var passed=streamPage.verify();console.log("Redline streaming navigation, presets and empty credentials smoke: "+(passed?"PASS":"FAIL"));return passed}
- function previewScenes(){appWindow.navigateTo(3,"Scene Editor","");scenePage.update("textEnabled",true);scenePage.update("text","REDLINE\nSlave IT Solutions — Greece");scenePage.update("textY",.72);scenePage.selectedLayer="text"}
+ function previewScenes(){appWindow.navigateTo(3,"Scene Editor","");scenePage.update("textEnabled",true);scenePage.update("text","REDLINE\nSlave IT Solutions — Greece");scenePage.update("textY",.72);scenePage.update("cameraEnabled",true);scenePage.cameras=[];scenePage.selectedLayer="camera"}
  function runSceneSmoke(){var passed=scenePage.verify();console.log("Redline scene creation, selection and capture snapshot smoke: "+(passed?"PASS":"FAIL"));return passed}
  function previewStreaming(){appWindow.navigateTo(3,"Live Stream","")}
  function previewHotkeys(){navigateTo(6,"Hotkeys","")}

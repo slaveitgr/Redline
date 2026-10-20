@@ -14,7 +14,7 @@ The status indicates local pipeline activity, not verified public platform deliv
 
 ## Remaining scope
 
-OAuth account sign-in, chat/viewer APIs, camera/live scene switching, hardware encoder selection, adaptive bitrate and enhanced filtering are not implemented. Stream keys are session-only; keyring persistence is not implemented. RTMPS uses the sink's default TLS certificate validation. No external streaming service has been tested yet.
+OAuth account sign-in, chat/viewer APIs, hardware encoder selection, adaptive bitrate and enhanced filtering are not implemented. Stream keys are session-only; keyring persistence is not implemented. RTMPS uses the sink's default TLS certificate validation. No external streaming service has been tested yet.
 
 ## Validation
 

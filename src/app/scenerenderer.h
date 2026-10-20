@@ -8,6 +8,9 @@
 #include <QBuffer>
 #include <QFileInfo>
 #include <QFileDialog>
+#include <QDir>
+#include <QFile>
+#include <QRegularExpression>
 #include <QVariantMap>
 #include <QUrl>
 class SceneRenderer final:public QObject {
@@ -23,6 +26,8 @@ class SceneRenderer final:public QObject {
   auto text=[&]{if(!s.value("textEnabled",false).toBool())return;painter.save();painter.setOpacity(value(s,"textOpacity",1));QFont font("Sans");font.setPixelSize(int(value(s,"fontSize",40,12,120)));painter.setFont(font);painter.setPen(Qt::white);const double x=1280*value(s,"textX",.05),y=720*value(s,"textY",.8);painter.drawText(QRectF(x,y,1280-x,720-y),Qt::AlignLeft|Qt::AlignTop|Qt::TextWordWrap,s.value("text").toString().left(200));painter.restore();};
   if(s.value("textAbove",true).toBool()){picture();text();}else{text();picture();}painter.end();return canvas;
  }
+ static QVariantMap cameraSettings(const QVariantMap &s){return {{"enabled",s.value("cameraEnabled",false).toBool()},{"device",s.value("cameraDevice").toString()},{"resolution",s.value("cameraResolution","auto").toString()},{"x",value(s,"cameraX",.68)},{"y",value(s,"cameraY",.62)},{"width",value(s,"cameraWidth",.28,.02,1)},{"height",value(s,"cameraHeight",.32,.02,1)},{"opacity",value(s,"cameraOpacity",1)}};}
+ Q_INVOKABLE QVariantList cameras(){QVariantList list;for(const auto &name:QDir("/sys/class/video4linux").entryList(QDir::Dirs|QDir::NoDotAndDotDot)){if(!QRegularExpression("^video[0-9]+$").match(name).hasMatch())continue;QFile file("/sys/class/video4linux/"+name+"/name");QString label=name;if(file.open(QIODevice::ReadOnly))label=QString::fromUtf8(file.read(256)).trimmed();const auto path="/dev/"+name;if(QFileInfo::exists(path))list.append(QVariantMap{{"device",path},{"label",label+" — "+path}});}return list;}
  Q_INVOKABLE QString preview(QVariantMap scene){auto canvas=image(scene);QByteArray bytes;QBuffer buffer(&bytes);buffer.open(QIODevice::WriteOnly);canvas.save(&buffer,"PNG");return "data:image/png;base64,"+QString::fromLatin1(bytes.toBase64());}
  Q_INVOKABLE QString issue(QVariantMap scene){QString error;image(scene,&error);return error;}
  Q_INVOKABLE QString chooseImage(){return QFileDialog::getOpenFileName(nullptr,"Scene image",QString(),"Images (*.png *.jpg *.jpeg)");}
