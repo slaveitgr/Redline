@@ -25,6 +25,7 @@ Item {
  signal showAbout()
  signal information(string title,string message)
  signal preferenceSaved(string message)
+ function closePreviewDialogs(){snapshotDialog.close();vrPage.closeInstaller()}
  function showVRInstall(){snapshotDialog.close();vrPage.showInstaller("ALVR")}
  function showSnapshots(){snapshotDialog.showSnapshots()}
  function preference(key,fallback) {var rev=preferencesRevision;return settings.getValue(key,fallback)}

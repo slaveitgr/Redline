@@ -61,7 +61,7 @@ def main():
         shutil.copy2(args.runtime / 'bin/redline-native', appdir / 'usr/bin')
         shutil.copytree(args.runtime / 'lib', appdir / 'usr/lib', symlinks=True)
         (appdir / 'usr/libexec/redline').mkdir(parents=True)
-        for name in ['redline-gpu-backend', 'redline-display.py', 'redline-capture.py', 'redline-vr-install.py']:
+        for name in ['redline-gpu-backend', 'redline-display.py', 'redline-capture.py', 'redline-vr-install.py', 'redline-screenshot.py']:
             source = args.runtime / 'libexec/redline' / name
             if source.exists():
                 shutil.copy2(source, appdir / 'usr/libexec/redline' / name)

@@ -35,7 +35,9 @@ ApplicationWindow {
    if(name.indexOf("gaming.graphics.")===0 && appWindow.selectedGame && read("game.mode","Global Experience")==="Custom")return "games/"+appWindow.selectedGame+"/"+name
    return name
   }
-  function read(name, fallback) {var rev=revision;try {return JSON.parse(settings.getValue("UiV6/"+key(name),JSON.stringify(fallback)))} catch(e){return fallback}}
+  function globalRead(name,fallback){try{var value=JSON.parse(settings.getValue("UiV6/"+name,JSON.stringify(fallback)));return value===null?fallback:value}catch(e){return fallback}}
+  function read(name, fallback) {var rev=revision;if(name.indexOf("launch.")===0 && appWindow.selectedGame)fallback=globalRead(name,fallback);try {var value=JSON.parse(settings.getValue("UiV6/"+key(name),JSON.stringify(fallback)));return value===null?fallback:value} catch(e){return fallback}}
+  function clearLaunchOverrides(){if(!appWindow.selectedGame)return;var keys=["launch.gamemode","launch.gamescope","launch.fps","launch.renderSize","launch.outputSize","launch.scaler","launch.filter"];for(var i=0;i<keys.length;i++)settings.setValue("UiV6/"+key(keys[i]),"null");revision++}
   function write(name,value) {settings.setValue("UiV6/"+key(name),JSON.stringify(value));revision++}
   function isFavorite(id) {return read("favorites",[]).indexOf(id)>=0}
   function toggleFavorite(id) {var list=read("favorites",[]);var index=list.indexOf(id);if(index>=0)list.splice(index,1);else list.push(id);write("favorites",list)}
@@ -267,6 +269,19 @@ ApplicationWindow {
   console.log("Redline AI and Home navigation smoke: "+(passed?"PASS":"FAIL"));return passed
  }
  function previewVRInstall(){navigateTo(6,"ReLive VR","");settingsPage.showVRInstall()}
+ function previewCaptureSettings(){settingsPage.closePreviewDialogs();resetAppearance();navigateTo(3,"Settings","")}
+ function previewGraphics(){navigateTo(2,"Graphics","")}
+ function previewHotkeys(){navigateTo(6,"Hotkeys","")}
+ function runNewFeaturesSmoke(){
+  var passed=captureBackend.codecs.length>0 && shortcutSupport.canonical("Ctrl+Shift+R")==="Ctrl+Shift+R" && shortcutSupport.canonical("plain text")===""
+  var savedGame=selectedGame;var old=uiStore.globalRead("launch.fps",0)
+  selectedGame="";uiStore.write("launch.fps",90);selectedGame="__redline_scope_test__"
+  passed=passed && uiStore.read("launch.fps",0)===90
+  uiStore.write("launch.fps",60);passed=passed && uiStore.read("launch.fps",0)===60 && uiStore.globalRead("launch.fps",0)===90
+  uiStore.clearLaunchOverrides();passed=passed && uiStore.read("launch.fps",0)===90
+  selectedGame="";uiStore.write("launch.fps",old);selectedGame=savedGame
+  console.log("Redline recording capabilities, shortcut and game scope smoke: "+(passed?"PASS":"FAIL"));return passed
+ }
  function previewSnapshots(){navigateTo(6,"System","");settingsPage.showSnapshots()}
  function previewNotifications(){navigate(7)}
  function previewSidebar(){navigationDrawer.open()}
@@ -326,11 +341,12 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
  }
  StackLayout {
   anchors.fill: parent
-  currentIndex: appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:appWindow.section===3 && (["Record","Media","Settings"].indexOf(appWindow.subSection)>=0)?8:4
+  currentIndex: appWindow.section===6 && appWindow.subSection==="Hotkeys"?10:appWindow.section===2 && appWindow.subSection==="Graphics"?9:appWindow.section===0?0:appWindow.section===2 && appWindow.subSection==="Games"?1:appWindow.section===6 && ["System","Display","ReLive VR","Preferences"].indexOf(appWindow.subSection)>=0?2:appWindow.section===4 && appWindow.subSection==="Metrics"?3:appWindow.section===4 && appWindow.subSection==="Tuning"?5:appWindow.section===7?6:appWindow.section===1?7:appWindow.section===3 && (["Record","Media","Settings"].indexOf(appWindow.subSection)>=0)?8:4
   RedlineHome {
    onOpenAI:prompt=>{appWindow.navigateTo(1,"Chat","");aiPage.draft(prompt)}
    onOpenGames:appWindow.navigateTo(2,"Games","")
    onOpenCapture:appWindow.navigateTo(3,"Record","")
+   onOpenGraphics:appWindow.navigateTo(2,"Graphics","")
    onShowDetails:(title,message)=>appWindow.showDetails(title,message)
    onOpenSettings:appWindow.navigate(6)
    onOpenProfiles:appWindow.openTuning()
@@ -347,7 +363,14 @@ text:modelData.name;onClicked:{favoritesDialog.close();appWindow.navigateTo(2,"G
   Profiles {id:profileUi}
   RedlineNotifications {objectName:"REDLINE_NOTIFICATIONS_PAGE";center:notificationCenter}
   RedlineAI {id:aiPage;subpage:appWindow.subSection;store:uiStore;onOpenChat:appWindow.navigateTo(1,"Chat","")}
-  RedlineCapture {subpage:appWindow.subSection;store:uiStore}
+  RedlineCapture {id:capturePage;subpage:appWindow.subSection;store:uiStore}
+  RedlineGraphics {store:uiStore;onOpenGames:appWindow.navigateTo(2,"Games","")}
+  RedlineHotkeys {store:uiStore;onOpenOverlay:{appWindow.navigateTo(4,"Metrics","");uiStore.write("perf.metrics.mode","Overlay")}}
  }
+
+ RedlineShortcut {settingsStore:uiStore;action:"record";defaultSequence:"Ctrl+Shift+R";onActivated:{if(!captureBackend.active)appWindow.navigateTo(3,"Record","");capturePage.toggleRecording()}}
+ RedlineShortcut {settingsStore:uiStore;action:"logging";defaultSequence:"Ctrl+Shift+L";onActivated:{if(nativeDashboard.logging)nativeDashboard.stopLogging();else nativeDashboard.startLogging()}}
+ RedlineShortcut {settingsStore:uiStore;action:"games";defaultSequence:"Alt+G";onActivated:appWindow.navigateTo(2,"Games","")}
+ RedlineShortcut {settingsStore:uiStore;action:"metrics";defaultSequence:"Alt+P";onActivated:appWindow.navigateTo(4,"Metrics","")}
  onClosing: close => { if (!systemTray.isAvailable() || !systemTray.isVisible()) Qt.quit() }
 }

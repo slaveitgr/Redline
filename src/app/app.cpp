@@ -7,6 +7,7 @@
 #include "systemintegration.h"
 #include "vrinstaller.h"
 #include "capturebackend.h"
+#include "shortcutsupport.h"
 #include "displaybackend.h"
 #include "settingssnapshots.h"
 #include "appearance.h"
@@ -209,6 +210,7 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
   auto installer = new VrInstaller(&qmlEngine);
   QObject::connect(installer, &VrInstaller::installed, integration, &SystemIntegration::refresh);
   qmlEngine.rootContext()->setContextProperty("captureBackend", new CaptureBackend(&qmlEngine));
+  qmlEngine.rootContext()->setContextProperty("shortcutSupport", new ShortcutSupport(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("displayBackend", new DisplayBackend(&qmlEngine));
   qmlEngine.rootContext()->setContextProperty("vrInstaller", installer);
   qmlEngine.rootContext()->setContextProperty("systemIntegration", integration);
@@ -347,7 +349,20 @@ void App::buildUI(std::unique_ptr<IUIFactory> &&uiFactory,
                                                       QMetaObject::invokeMethod(mainWindow_, "previewVRInstall");
                                                       QTimer::singleShot(500, mainWindow_, [this, previewDir, allOk, aiResult]() {
                                                         mainWindow_->grabWindow().save(previewDir + "/redline-vr-installer.png");
-                                                        QApplication::exit(allOk && aiResult.toBool() ? 0 : 2);
+                                                        QMetaObject::invokeMethod(mainWindow_, "previewCaptureSettings");
+                                                        QTimer::singleShot(600,mainWindow_,[this,previewDir,allOk,aiResult]{
+                                                          mainWindow_->grabWindow().save(previewDir+"/redline-recording-options.png");
+                                                          QMetaObject::invokeMethod(mainWindow_,"previewGraphics");
+                                                          QTimer::singleShot(600,mainWindow_,[this,previewDir,allOk,aiResult]{
+                                                            mainWindow_->grabWindow().save(previewDir+"/redline-global-graphics.png");
+                                                            QMetaObject::invokeMethod(mainWindow_,"previewHotkeys");
+                                                            QTimer::singleShot(600,mainWindow_,[this,previewDir,allOk,aiResult]{
+                                                              mainWindow_->grabWindow().save(previewDir+"/redline-hotkeys.png");
+                                                              QVariant next;QMetaObject::invokeMethod(mainWindow_,"runNewFeaturesSmoke",Q_RETURN_ARG(QVariant,next));
+                                                              QApplication::exit(allOk && aiResult.toBool() && next.toBool()?0:2);
+                                                            });
+                                                          });
+                                                        });
                                                       });
                                                     });
                                                   });

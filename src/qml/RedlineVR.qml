@@ -9,6 +9,7 @@ ColumnLayout {
  property bool alvrAvailable:Boolean(systemIntegration.vr.alvr_dashboard || systemIntegration.vr.alvr_launcher)
  property bool wivrnAvailable:Boolean(systemIntegration.vr["wivrn-dashboard"] || systemIntegration.vr.wivrnFlatpak)
  property bool selectedAvailable:backend==="ALVR"?alvrAvailable:wivrnAvailable
+ function closeInstaller(){installDialog.close()}
  function showInstaller(target){installDialog.target=target;installDialog.open()}
  function tr(s){return redlineAppearance.text(s,redlineAppearance.revision)}
  function shade(s){return redlineAppearance.color(s,redlineAppearance.revision)}

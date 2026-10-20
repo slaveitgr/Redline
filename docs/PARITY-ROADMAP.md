@@ -10,10 +10,10 @@ The target is a complete Adrenalin-style Linux application, including navigation
 | Home | Three-column dashboard, discovered games, hardware information | Functional recent activity and media; consistent layout at each supported window size |
 | AI / Chat / Apps | Session chat and local model discovery via Ollama, optional hardware snapshot | Document retrieval, image generation, real hardware inference validation |
 | Gaming / Games | Installed Steam games, search, sort, favorites, per-game settings, launch recipes | Playtime and game telemetry; persistence and refresh on library changes |
-| Gaming / Graphics | Layout, global/per-game scope, explicit unavailable proprietary settings | Linux implementations for each supported graphics setting; driver-specific detection |
+| Gaming / Graphics | Native global launch defaults, per-game inheritance/reset, Gamescope scaling/filter/frame limit, capability-gated driver states | Linux implementations for each supported graphics setting; driver-specific detection |
 | Gaming / Advisors | Availability page | Recommendations based on measured sessions |
-| Record & Stream / Record | Experimental portal/PipeWire VP8/WebM recording; generated video/audio encoding tests | Interactive portal validation, live preview, device selection and alternative encoders |
-| Live Stream / Scene Editor / Media / Capture Settings | Actual saved recording list and native local recording preferences; other pages retain setup structure | Real streaming, scenes, replay/GIF and broader media controls |
+| Record & Stream / Record | Experimental portal recording with selectable VP8/VP9/H.264 profiles, bitrate/resolution and mixed default microphone/system audio; generated-source tests | Interactive portal validation, live preview, device selection and alternative encoders |
+| Live Stream / Scene Editor / Media / Capture Settings | Actual recording/screenshot media list, interactive screenshot action and native recording preferences; other pages retain setup structure | Real streaming, scenes, replay/GIF and broader media controls |
 | Performance / Metrics | Live GPU/CPU/RAM sensors, charts, visibility, CSV logs | Game FPS/frame-time provider, per-metric graph/gauge/overlay controls, metric profiles and multi-GPU selection |
 | Performance / Tracking | Hardware sample cadence and actual CSV output | Independent frame-metric interval and full tracking controls |
 | Performance / Overlay | MangoHud launch integration, position, font, opacity, 12 metric flags, layout, profiles, hotkey and FPS limit settings | Live control where supported and column sizing; individual metric flags, profiles, hotkey and shared Preferences switch are implemented |
@@ -23,7 +23,7 @@ The target is a complete Adrenalin-style Linux application, including navigation
 | Settings / System | Actual system/device details, About and upstream credits | Scoped snapshot import/export and reset with validation/backup implemented; issue-report file export and live update checking remain |
 | Settings / Display | GNOME mode/refresh, advertised VRR, supported desktop scales/color modes, staged Apply and compositor confirmation/revert | Interactive apply/revert tests, other compositors, advanced color and link controls |
 | Settings / Audio & Video | Page structure | Linux audio processing and video profiles |
-| Settings / Hotkeys | Availability states | Bindings tied to implemented actions, conflict handling and Wayland support |
+| Settings / Hotkeys | Validated in-app bindings for recording/logging/navigation, duplicate checks and repeat suppression | Global Wayland shortcuts and wider action coverage |
 | Settings / ReLive VR | SteamVR status, native ALVR/WiVRn and WiVRn Flatpak detection, explicit dashboard launch, ALVR launcher and WiVRn installation actions | Direct headset/session/settings integration and headset validation; the AMD Windows runtime is not portable as-is |
 | Settings / Preferences | Dark/light theme, Greek/English core UI, Redline tray branding and saved preferences | Complete translations, audit every toggle for real effects and remove inactive settings from enabled control states |
 | Distribution | Ubuntu development .deb builder and container lifecycle checks, AppImage Preview builder, Ubuntu/Debian source-build workflow | Distribution runtime validation, authorization lifecycle on real desktops, RPM/Arch/Flatpak and broader architectures |

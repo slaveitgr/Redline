@@ -16,12 +16,10 @@ Verification includes fixture tests for capability rejection, mirrored/disabled 
 
 References: [Mutter display interface](https://github.com/GNOME/mutter/blob/main/data/dbus-interfaces/org.gnome.Mutter.DisplayConfig.xml), [GNOME Shell confirmation dialog](https://github.com/GNOME/gnome-shell/blob/main/js/ui/windowManager.js), [Gamescope](https://github.com/ValveSoftware/gamescope).
 
-## Experimental local recording
+## Experimental local recording and screenshots
 
-Record, Media and recording Settings now use a native portal/PipeWire/GStreamer backend. Recording starts only after a user action and the desktop's screen/window chooser. Output is VP8/WebM at 30 or 60 fps, with optional experimental default-output monitor audio. Stop finalizes the file; Media lists actual saved recordings. There is no embedded live preview.
+Recording now supports installed VP8/WebM, VP9/WebM and H.264/MP4 software profiles, selectable bitrate, 30/60 fps, native/720p/1080p output, optional system audio and the default microphone. The screenshot action uses the interactive desktop portal. Media lists actual recordings and screenshots. Read-only Preview cannot record or take screenshots.
 
-The real encoder/muxer is tested with generated video and audio sources, without recording the desktop. End-to-end desktop portal capture has not yet been interactively validated. Required plugins and portal support are checked; read-only preview cannot record.
+Generated-source encoding, container finalization and media handling are tested. Interactive desktop portal recording, screenshots and audio routing still need validation on each desktop. Live streaming, scene editing, replay/GIF and hardware encoding remain pending.
 
-Live streaming, scene editing, instant replay/GIF, microphone tracks and alternative codecs remain pending. Settings for those features are not active recording controls.
-
-Reference: [ScreenCast portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.ScreenCast.html).
+See [implementation scope and verification](RECORDING-AND-GAMING.md).

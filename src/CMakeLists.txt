@@ -394,6 +394,7 @@ set(CMAKE_AUTOMOC ON)
 add_executable(corectrl
   app/settingssnapshots.h
   app/capturebackend.h
+  app/shortcutsupport.h
   app/displaybackend.h
   app/vrinstaller.h
   app/systemintegration.h
@@ -445,3 +446,5 @@ install(PROGRAMS "${PROJECT_SOURCE_DIR}/tools/redline-vr-install.py" DESTINATION
 install(PROGRAMS "${PROJECT_SOURCE_DIR}/tools/redline-steam-options.py" DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/redline")
 
 install(PROGRAMS "${PROJECT_SOURCE_DIR}/tools/redline-display.py" DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/redline")
+
+install(PROGRAMS "${PROJECT_SOURCE_DIR}/tools/redline-screenshot.py" DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/redline")

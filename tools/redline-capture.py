@@ -20,9 +20,42 @@ IFACE = 'org.freedesktop.portal.ScreenCast'
 def event(state, **data):
     print(json.dumps({'state': state, **data}), flush=True)
 
-def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=False, serial=None):
+CODECS = {
+    'vp8': dict(label='VP8 / WebM', extension='webm', video='vp8enc', audio='vorbisenc', mux='webmmux'),
+    'vp9': dict(label='VP9 / WebM', extension='webm', video='vp9enc', audio='vorbisenc', mux='webmmux'),
+    'h264': dict(label='H.264 / MP4', extension='mp4', video='x264enc', audio='avenc_aac', mux='mp4mux'),
+}
+RESOLUTIONS = {'native': None, '720p': (1280, 720), '1080p': (1920, 1080)}
+
+
+def available_codecs():
+    result = []
+    for key, profile in CODECS.items():
+        required = [profile['video'], profile['audio'], profile['mux']]
+        if key == 'h264':
+            required.append('h264parse')
+        if all(Gst.ElementFactory.find(name) for name in required):
+            result.append(dict(id=key, label=profile['label'], extension=profile['extension']))
+    return result
+
+
+def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=False, serial=None,
+                  codec='vp8', bitrate=8, resolution='native', microphone=False):
+    if codec not in CODECS or resolution not in RESOLUTIONS or fps not in (30, 60) or not 2 <= bitrate <= 100:
+        raise ValueError('Unsupported recording configuration.')
+    profile = CODECS[codec]
     pipeline = Gst.Pipeline.new('redline-recording')
-    source = Gst.ElementFactory.make('videotestsrc' if synthetic else 'pipewiresrc', 'screen')
+    def element(name, instance=None):
+        item = Gst.ElementFactory.make(name, instance)
+        if item is None:
+            raise RuntimeError('Missing GStreamer plugin: ' + name)
+        pipeline.add(item)
+        return item
+    def link(chain):
+        for left, right in zip(chain, chain[1:]):
+            if not left.link(right):
+                raise RuntimeError('Could not connect recording elements.')
+    source = element('videotestsrc' if synthetic else 'pipewiresrc', 'screen')
     if synthetic:
         source.set_property('num-buffers', 30)
     else:
@@ -32,41 +65,51 @@ def make_pipeline(output, fps=30, audio=False, fd=None, node=None, synthetic=Fal
         else:
             source.set_property('path', str(node))
         source.set_property('do-timestamp', True)
-    convert = Gst.ElementFactory.make('videoconvert')
-    rate = Gst.ElementFactory.make('videorate')
-    caps = Gst.ElementFactory.make('capsfilter')
-    caps.set_property('caps', Gst.Caps.from_string(f'video/x-raw,framerate={fps}/1'))
-    encoder = Gst.ElementFactory.make('vp8enc')
-    encoder.set_property('deadline', 1)
-    encoder.set_property('cpu-used', 8)
-    encoder.set_property('target-bitrate', 8_000_000)
-    queue = Gst.ElementFactory.make('queue')
-    mux = Gst.ElementFactory.make('webmmux', 'mux')
-    sink = Gst.ElementFactory.make('filesink')
+    convert, scale, rate = element('videoconvert'), element('videoscale'), element('videorate')
+    scale.set_property('add-borders', True)
+    caps = element('capsfilter')
+    dimensions = RESOLUTIONS[resolution]
+    spec = f'video/x-raw,framerate={fps}/1,pixel-aspect-ratio=1/1'
+    if dimensions:
+        spec += f',width={dimensions[0]},height={dimensions[1]}'
+    caps.set_property('caps', Gst.Caps.from_string(spec))
+    encoder = element(profile['video'], 'video-encoder')
+    if codec in ('vp8', 'vp9'):
+        encoder.set_property('deadline', 1)
+        encoder.set_property('cpu-used', 8)
+        encoder.set_property('target-bitrate', bitrate * 1_000_000)
+    else:
+        encoder.set_property('bitrate', bitrate * 1000)
+        Gst.util_set_object_arg(encoder, 'speed-preset', 'ultrafast')
+        Gst.util_set_object_arg(encoder, 'tune', 'zerolatency')
+    video = [source, convert, scale, rate, caps, encoder]
+    if codec == 'h264':
+        video.append(element('h264parse'))
+    queue, mux, sink = element('queue'), element(profile['mux'], 'mux'), element('filesink')
+    if codec == 'h264':
+        mux.set_property('faststart', True)
     sink.set_property('location', str(output))
     sink.set_property('sync', False)
-    elements = [source, convert, rate, caps, encoder, queue, mux, sink]
-    if any(item is None for item in elements):
-        raise RuntimeError('Required GStreamer recording plugins are missing.')
-    for item in elements:
-        pipeline.add(item)
-    for left, right in zip(elements, elements[1:]):
-        if not left.link(right):
-            raise RuntimeError('Could not link the recording pipeline.')
-    if audio:
-        sound = Gst.ElementFactory.make('audiotestsrc' if synthetic else 'pulsesrc')
-        if synthetic:
-            sound.set_property('num-buffers', 45)
-        else:
-            sound.set_property('device', '@DEFAULT_MONITOR@')
-        chain = [sound, Gst.ElementFactory.make('audioconvert'), Gst.ElementFactory.make('audioresample'), Gst.ElementFactory.make('vorbisenc'), Gst.ElementFactory.make('queue')]
-        if any(item is None for item in chain):
-            raise RuntimeError('Required system-audio plugins are missing.')
-        for item in chain:
-            pipeline.add(item)
-        for left, right in zip(chain, chain[1:] + [mux]):
-            if not left.link(right):
-                raise RuntimeError('Could not link system audio.')
+    link(video + [queue, mux, sink])
+    inputs = ([True] if audio else []) + ([False] if microphone else [])
+    if inputs:
+        mixer = element('audiomixer', 'audio-mixer')
+        for index, system in enumerate(inputs):
+            sound = element('audiotestsrc' if synthetic else 'pulsesrc', 'system-audio' if system else 'microphone')
+            if synthetic:
+                sound.set_property('num-buffers', 45)
+                sound.set_property('freq', 440.0 if system else 880.0)
+            elif system:
+                sound.set_property('device', '@DEFAULT_MONITOR@')
+            volume = element('volume')
+            volume.set_property('volume', 0.5 if len(inputs) == 2 else 1.0)
+            audio_caps = element('capsfilter')
+            audio_caps.set_property('caps', Gst.Caps.from_string('audio/x-raw,rate=48000,channels=2'))
+            link([sound, element('audioconvert'), element('audioresample'), audio_caps, volume, element('queue'), mixer])
+        audio_encoder = element(profile['audio'])
+        if codec == 'h264':
+            audio_encoder.set_property('bitrate', 128000)
+        link([mixer, element('audioconvert'), audio_encoder, element('queue'), mux])
     return pipeline
 
 class Recorder:
@@ -131,7 +174,7 @@ class Recorder:
         handle, descriptors = self.connection.call_with_unix_fd_list_sync(BUS, PATH, IFACE, 'OpenPipeWireRemote', GLib.Variant('(oa{sv})', (self.session, {})), GLib.VariantType.new('(h)'), Gio.DBusCallFlags.NONE, 10000, None, None)
         self.fd = descriptors.get(handle.unpack()[0])
         # Prefer portal v6 stream serials; use legacy node IDs on older portals.
-        self.pipeline = make_pipeline(self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'))
+        self.pipeline = make_pipeline(self.args.output, self.args.fps, self.args.audio, self.fd, streams[0][0], serial=streams[0][1].get('pipewire-serial'), codec=self.args.codec, bitrate=self.args.bitrate, resolution=self.args.resolution, microphone=self.args.microphone)
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message', self.bus_message)
@@ -203,12 +246,19 @@ if __name__ == '__main__':
     parser.add_argument('--output')
     parser.add_argument('--fps', type=int, choices=[30, 60], default=30)
     parser.add_argument('--audio', action='store_true')
+    parser.add_argument('--microphone', action='store_true')
+    parser.add_argument('--codec', choices=list(CODECS), default='vp8')
+    parser.add_argument('--bitrate', type=int, choices=range(2,101), default=8)
+    parser.add_argument('--resolution', choices=list(RESOLUTIONS), default='native')
     args = parser.parse_args()
     if args.check:
-        required = ['pipewiresrc', 'videoconvert', 'videorate', 'vp8enc', 'webmmux', 'filesink']
+        required = ['pipewiresrc', 'videoconvert', 'videoscale', 'videorate', 'filesink']
         missing = [name for name in required if not Gst.ElementFactory.find(name)]
-        event('capabilities', supported=not missing, missing=missing, audio=all(Gst.ElementFactory.find(n) for n in ['pulsesrc', 'vorbisenc', 'audioresample']))
-        raise SystemExit(bool(missing))
+        codecs = available_codecs()
+        event('capabilities', supported=not missing and bool(codecs), codecs=codecs, missing=missing, audio=all(Gst.ElementFactory.find(n) for n in ['pulsesrc', 'audiomixer', 'audioconvert', 'audioresample', 'volume']))
+        raise SystemExit(bool(missing) or not codecs)
+    if os.getenv('REDLINE_READ_ONLY') is not None:
+        parser.error('Recording is disabled in UI preview.')
     if not args.output or not Path(args.output).is_absolute() or Path(args.output).exists():
         parser.error('A new absolute output path is required.')
     raise SystemExit(Recorder(args).run())

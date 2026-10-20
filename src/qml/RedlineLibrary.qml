@@ -76,13 +76,13 @@ Item {
    ColumnLayout {
     width:parent.width;spacing:18
     RedlineLaunchControls {Layout.fillWidth:true;store:library.store;game:library.game()}
-    Label {text:library.tr("Per-game graphics overrides are not connected. Supported GPU / CPU tuning is available in the integrated controls.");color:library.shade("#999");wrapMode:Text.WordWrap;Layout.fillWidth:true}
+    Label {text:library.tr("Launch settings above override global defaults for this game. Driver-level GPU / CPU tuning is available in the integrated controls.");color:library.shade("#999");wrapMode:Text.WordWrap;Layout.fillWidth:true}
     RowLayout {
      Layout.fillWidth:true;spacing:24
      ColumnLayout {
       Layout.fillWidth:true;Layout.preferredWidth:1;Layout.alignment:Qt.AlignTop;spacing:8
       RowLayout {Layout.fillWidth:true;Label{text:library.tr("Graphics");color:library.shade("#ddd");Layout.fillWidth:true;font.pixelSize:17}RedlineButton{text:"GPU / CPU controls ›";onClicked:library.openHardware()}}
-      RedlineSettingRow {title:"Gaming Experience";kind:"info";currentValue:"Global Experience";description:"Per-game overrides unavailable"}
+      RedlineSettingRow {title:"Gaming Experience";kind:"info";currentValue:"Per-game launch settings";description:"Global defaults are inherited until overridden above"}
       Repeater {
        model:(Catalog.pages["Gaming/Graphics"] || []).slice(1)
        RedlineSettingRow {required property var modelData;title:modelData.label;description:modelData.description || "";kind:"switch";supported:false;reason:library.tr("This driver feature is not exposed by the current Linux backend.")}

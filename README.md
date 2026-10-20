@@ -23,6 +23,10 @@ Actual Redline interface from the development build.
 
 ![Greek interface and light appearance](docs/screenshots/vr-greek.png)
 
+![Recording options](docs/screenshots/recording.png)
+
+![Application hotkeys](docs/screenshots/hotkeys.png)
+
 ### Inside Redline
 
 | Area | Current implementation |
@@ -30,15 +34,16 @@ Actual Redline interface from the development build.
 | **Home & navigation** | Dashboard, Steam library discovery, favorites, navigation history, search and session notifications. |
 | **Performance metrics** | Live CPU/GPU/RAM monitoring, time-based charts, adjustable sampling and CSV logging. Unmeasured FPS stays unavailable. |
 | **Hardware tuning** | Integrated GPU controls for capabilities exposed by the driver, confirmation/revert handling and CoreCtrl-derived CPU controls. |
-| **Gaming tools** | GameMode, Gamescope and MangoHud detection, plus per-game Steam launch integration and overlay configuration. |
+| **Gaming tools** | Global launch defaults and per-game overrides for GameMode/Gamescope, render/output size, scaling/filter/frame limit, Steam launch integration and overlay configuration. |
 | **Local AI** | Ollama model discovery and session chat, with an optional hardware snapshot attached by the user. Requires a running local Ollama service and model. |
 | **VR setup** | ALVR launcher installation and launch; WiVRn installation through an existing Flathub setup. Headset pairing and streaming are handled by the selected backend. |
 | **Display** | GNOME resolution/refresh, desktop scaling, advertised Adaptive Sync and color modes, with the desktop’s confirmation/revert dialog. |
-| **Recording** | Experimental portal-selected local VP8/WebM recording and saved-media listing; interactive capture validation is pending. |
+| **Recording & Media** | Experimental VP8/VP9/WebM and H.264/MP4 profiles, bitrate/resolution, microphone/system audio mixing, portal screenshots and saved media. Interactive portal validation is pending. |
 | **System** | Hardware and driver information, driver compatibility catalog, settings export/import and scoped reset. |
+| **Hotkeys** | Configurable in-app recording, metrics logging and navigation shortcuts with conflict checks and repeat suppression. |
 | **Appearance** | Dark/light appearance, Greek/English core interface and Redline tray branding. |
 
-Live streaming, advanced color adjustments and additional feature parity are under development. See the [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
+Live streaming, advanced color adjustments and additional feature parity are under development. See the [recording, gaming and hotkeys implementation](docs/RECORDING-AND-GAMING.md), [coverage roadmap](docs/PARITY-ROADMAP.md), [display/capture status](docs/DISPLAY-CAPTURE-STATUS.md), [VR setup](docs/VR-INSTALLATION.md) and [AI integration](docs/AI-AND-HOME.md) for detailed scope. VR streaming has not yet been validated with a physical headset.
 
 ### Download Alpha 2 (native package)
 

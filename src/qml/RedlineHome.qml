@@ -9,6 +9,7 @@ Item {
  signal openGames()
  signal openCapture()
  signal openGame(string id)
+ signal openGraphics()
  signal openProfiles()
  signal openPerformance()
  signal openSettings()
@@ -27,7 +28,7 @@ Item {
       anchors.fill: parent; anchors.margins: 14; spacing: 10
       Label { text: redlineAppearance.text(("Global graphics"), redlineAppearance.revision); font.pixelSize: 19; color: redlineAppearance.color("#ededf0", redlineAppearance.revision); Layout.alignment: Qt.AlignHCenter }
       Small { text: redlineAppearance.text(("Manage performance & power profiles"), redlineAppearance.revision); Layout.alignment: Qt.AlignHCenter }
-      RedlineButton { text: "Configure"; accent: true; Layout.fillWidth: true; onClicked: home.openProfiles() }
+      RedlineButton { text: "Configure"; accent: true; Layout.fillWidth: true; onClicked: home.openGraphics() }
      }
     }
    }
@@ -54,7 +55,7 @@ Item {
      Rectangle {
       Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumHeight: 75; color: redlineAppearance.color("#0c0c0f", redlineAppearance.revision)
       Label { anchors.centerIn: parent; text: redlineAppearance.text(("▷"), redlineAppearance.revision); font.pixelSize: 32; color: redlineAppearance.color("#73737b", redlineAppearance.revision) }
-      Small { anchors.bottom: parent.bottom; anchors.bottomMargin: 10; anchors.horizontalCenter: parent.horizontalCenter; text: redlineAppearance.text(("Capture is not connected"), redlineAppearance.revision)}
+      Small { anchors.bottom: parent.bottom; anchors.bottomMargin: 10; anchors.horizontalCenter: parent.horizontalCenter; text: redlineAppearance.text(captureBackend.active?"Recording in progress":captureBackend.supported?"Recording & screenshots":"Screenshot portal available", redlineAppearance.revision)}
      }
      GridLayout {
       columns: 2; rowSpacing: 1; columnSpacing: 1; Layout.fillWidth: true
@@ -64,10 +65,10 @@ Item {
         required property var modelData
         Layout.fillWidth: true; Layout.preferredHeight: home.height < 730 ? 70 : 91; color: redlineAppearance.color("#28282b", redlineAppearance.revision)
         Column { anchors.centerIn: parent; spacing: 10
-         Label { text: redlineAppearance.text((modelData.symbol), redlineAppearance.revision); font.pixelSize: 28; color: redlineAppearance.color("#854254", redlineAppearance.revision); anchors.horizontalCenter: parent.horizontalCenter }
+         Label { text: redlineAppearance.text((modelData.symbol), redlineAppearance.revision); font.pixelSize: 28; color: modelData.label==="Take a Screenshot" || modelData.label==="Record a Video"?"#ed003b":redlineAppearance.color("#854254",redlineAppearance.revision); anchors.horizontalCenter: parent.horizontalCenter }
          Small { text: redlineAppearance.text((modelData.label), redlineAppearance.revision); color: redlineAppearance.color("#77777e", redlineAppearance.revision) }
         }
-        MouseArea { anchors.fill: parent; onClicked: home.openCapture() }
+        MouseArea { enabled:modelData.label==="Take a Screenshot" || modelData.label==="Record a Video";anchors.fill: parent; onClicked:{if(modelData.label==="Take a Screenshot")captureBackend.takeScreenshot();else if(modelData.label==="Record a Video")home.openCapture();else home.showDetails(modelData.label,"Replay and GIF capture are not implemented yet.")}}
        }
       }
      }
